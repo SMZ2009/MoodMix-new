@@ -195,6 +195,125 @@ app.get('/api/sounds/search', async (req, res) => {
   }
 });
 
+// ═══════════════════════════════════════════
+// 音乐平台 API 代理
+// ═══════════════════════════════════════════
+app.get('/api/music/search', async (req, res) => {
+  const { platform, query, page_size = 10 } = req.query;
+  
+  if (!platform || !query) {
+    return res.status(400).json({ error: '缺少 platform 或 query 参数', success: false, results: [] });
+  }
+
+  try {
+    if (platform === 'qqmusic') {
+      // QQ音乐搜索 API (模拟实现)
+      // 实际项目中需要使用真实的 QQ音乐 API
+      const mockResults = [
+        {
+          id: '100001',
+          name: '雨声',
+          artist: '环境音乐',
+          album: '自然声音',
+          duration: 180,
+          previewUrl: 'https://example.com/qqmusic/rain.mp3',
+          coverUrl: 'https://example.com/qqmusic/rain.jpg'
+        },
+        {
+          id: '100002',
+          name: '森林鸟鸣',
+          artist: '自然音效',
+          album: '自然声音',
+          duration: 240,
+          previewUrl: 'https://example.com/qqmusic/forest.mp3',
+          coverUrl: 'https://example.com/qqmusic/forest.jpg'
+        }
+      ];
+      
+      console.log(`[QQ Music] Searching: ${query}`);
+      res.json({ success: true, count: mockResults.length, results: mockResults });
+      
+    } else if (platform === 'netease') {
+      // 网易云音乐搜索 API (模拟实现)
+      // 实际项目中需要使用真实的 网易云音乐 API
+      const mockResults = [
+        {
+          id: '200001',
+          name: '海浪声',
+          artist: '环境音效',
+          album: '海洋声音',
+          duration: 300,
+          previewUrl: 'https://example.com/netease/ocean.mp3',
+          coverUrl: 'https://example.com/netease/ocean.jpg'
+        },
+        {
+          id: '200002',
+          name: '咖啡厅环境音',
+          artist: '城市音效',
+          album: '城市声音',
+          duration: 180,
+          previewUrl: 'https://example.com/netease/cafe.mp3',
+          coverUrl: 'https://example.com/netease/cafe.jpg'
+        }
+      ];
+      
+      console.log(`[NetEase Music] Searching: ${query}`);
+      res.json({ success: true, count: mockResults.length, results: mockResults });
+      
+    } else if (platform === 'yyfang') {
+      // yyfang.top 音源 API - 返回HTML页面，需要特殊处理
+      try {
+        console.log(`[YYFang] Searching: ${query}`);
+        
+        // 由于yyfang.top返回的是HTML页面，暂时使用模拟数据
+        // 实际项目中需要解析HTML或使用其他方式获取数据
+        const mockResults = [
+          {
+            id: 'yy001',
+            name: `${query} - 搜索结果1`,
+            artist: 'YY音源',
+            album: '在线音乐',
+            duration: 240,
+            previewUrl: `https://yyfang.top/music/${encodeURIComponent(query)}_1.mp3`,
+            coverUrl: 'https://yyfang.top/cover/default.jpg'
+          },
+          {
+            id: 'yy002',
+            name: `${query} - 搜索结果2`,
+            artist: '热门歌手',
+            album: '精选集',
+            duration: 180,
+            previewUrl: `https://yyfang.top/music/${encodeURIComponent(query)}_2.mp3`,
+            coverUrl: 'https://yyfang.top/cover/default.jpg'
+          },
+          {
+            id: 'yy003',
+            name: `${query} - 搜索结果3`,
+            artist: '推荐艺人',
+            album: '热门单曲',
+            duration: 200,
+            previewUrl: `https://yyfang.top/music/${encodeURIComponent(query)}_3.mp3`,
+            coverUrl: 'https://yyfang.top/cover/default.jpg'
+          }
+        ];
+        
+        console.log(`[YYFang] Found ${mockResults.length} songs for "${query}"`);
+        res.json({ success: true, count: mockResults.length, results: mockResults });
+
+      } catch (error) {
+        console.error('[YYFang Proxy Error]', error.message);
+        res.status(500).json({ error: error.message, success: false, results: [] });
+      }
+      
+    } else {
+      return res.status(400).json({ error: '不支持的音乐平台', success: false, results: [] });
+    }
+  } catch (error) {
+    console.error('[Music Platform Proxy Error]', error.message);
+    res.status(500).json({ error: error.message, success: false, results: [] });
+  }
+});
+
 // SiliconFlow API 配置
 const SILICONFLOW_API_URL = 'https://api.siliconflow.cn/v1/chat/completions';
 const MODEL_8B = process.env.SILICONFLOW_MODEL_8B || 'Qwen/Qwen2.5-7B-Instruct';
