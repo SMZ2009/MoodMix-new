@@ -49,6 +49,9 @@ const MusicLibraryView = ({ onBack }) => {
   const [isSearching, setIsSearching] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
   
+  // 音乐平台选择
+  const [currentPlatform, setCurrentPlatform] = useState('freesound'); // freesound, qqmusic, netease, yyfang
+  
   // 播放状态
   const [playingScene, setPlayingScene] = useState(null);
   const [playingSound, setPlayingSound] = useState(null);
@@ -75,15 +78,20 @@ const MusicLibraryView = ({ onBack }) => {
     };
   }, []);
 
-  // 搜索 Freesound
-  const searchFreesound = useCallback(async (query) => {
+  // 搜索音乐
+  const searchMusic = useCallback(async (query) => {
     if (!query.trim()) return;
     
     setIsSearching(true);
     setShowSearchResults(true);
     
     try {
-      const res = await fetch(`/api/sounds/search?query=${encodeURIComponent(query)}&page_size=10`);
+      let res;
+      if (currentPlatform === 'freesound') {
+        res = await fetch(`/api/sounds/search?query=${encodeURIComponent(query)}&page_size=10`);
+      } else {
+        res = await fetch(`/api/music/search?platform=${currentPlatform}&query=${encodeURIComponent(query)}&page_size=10`);
+      }
       const data = await res.json();
       
       if (data.success) {
@@ -95,7 +103,7 @@ const MusicLibraryView = ({ onBack }) => {
     } finally {
       setIsSearching(false);
     }
-  }, []);
+  }, [currentPlatform]);
 
   // 播放场景
   const playScene = useCallback(async (sceneKey, forceRefresh = false) => {
@@ -115,7 +123,12 @@ const MusicLibraryView = ({ onBack }) => {
     try {
       // 用场景的 searchTips 搜索
       const query = scene.searchTips || scene.freesoundTags.slice(0, 2).join(' ');
-      const res = await fetch(`/api/sounds/search?query=${encodeURIComponent(query)}&duration_min=60&page_size=10`);
+      let res;
+      if (currentPlatform === 'freesound') {
+        res = await fetch(`/api/sounds/search?query=${encodeURIComponent(query)}&duration_min=60&page_size=10`);
+      } else {
+        res = await fetch(`/api/music/search?platform=${currentPlatform}&query=${encodeURIComponent(query)}&page_size=10`);
+      }
       const data = await res.json();
       
       if (data.success && data.results.length > 0) {
@@ -150,7 +163,7 @@ const MusicLibraryView = ({ onBack }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [playingScene]);
+  }, [playingScene, currentPlatform]);
 
   // 切换同场景下的不同音频
   const playNextInScene = useCallback(async () => {
@@ -275,6 +288,48 @@ const MusicLibraryView = ({ onBack }) => {
           <div className="w-10" /> {/* 占位 */}
         </div>
         
+        {/* 音乐平台选择 */}
+        <div className="px-4 pb-2">
+          <div className="flex gap-2">
+            <button
+              onClick={() => setCurrentPlatform('freesound')}
+              className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all
+                         ${currentPlatform === 'freesound' 
+                           ? 'bg-amber-100 text-amber-700'
+                           : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            >
+              环境音
+            </button>
+            <button
+              onClick={() => setCurrentPlatform('qqmusic')}
+              className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all
+                         ${currentPlatform === 'qqmusic' 
+                           ? 'bg-green-100 text-green-700'
+                           : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            >
+              QQ音乐
+            </button>
+            <button
+              onClick={() => setCurrentPlatform('netease')}
+              className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all
+                         ${currentPlatform === 'netease' 
+                           ? 'bg-red-100 text-red-700'
+                           : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            >
+              网易云
+            </button>
+            <button
+              onClick={() => setCurrentPlatform('yyfang')}
+              className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all
+                         ${currentPlatform === 'yyfang' 
+                           ? 'bg-purple-100 text-purple-700'
+                           : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            >
+              YY音源
+            </button>
+          </div>
+        </div>
+        
         {/* 搜索栏 */}
         <div className="px-4 pb-3">
           <div className="relative">
@@ -283,8 +338,8 @@ const MusicLibraryView = ({ onBack }) => {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && searchFreesound(searchQuery)}
-              placeholder="搜索环境音... (如: rain, forest)"
+              onKeyDown={(e) => e.key === 'Enter' && searchMusic(searchQuery)}
+              placeholder={`搜索${currentPlatform === 'freesound' ? '环境音' : currentPlatform === 'yyfang' ? 'YY音源' : '音乐'}...`}
               className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-gray-100 text-sm 
                          focus:outline-none focus:ring-2 focus:ring-amber-300 transition-all"
               style={serifFont}
@@ -346,14 +401,21 @@ const MusicLibraryView = ({ onBack }) => {
                       <p className="text-sm font-medium text-gray-800 truncate" style={serifFont}>
                         {sound.name}
                       </p>
-                      <p className="text-xs text-gray-400">{sound.duration}s · {sound.author}</p>
+                      <p className="text-xs text-gray-400">
+                        {currentPlatform === 'freesound' 
+                          ? `${sound.duration}s · ${sound.author}`
+                          : currentPlatform === 'yyfang'
+                            ? `${sound.artist} · ${sound.album}`
+                            : `${sound.artist} · ${sound.album}`
+                        }
+                      </p>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
               <p className="text-center text-sm text-gray-400 py-8" style={serifFont}>
-                未找到相关环境音
+                未找到相关{currentPlatform === 'freesound' ? '环境音' : currentPlatform === 'yyfang' ? 'YY音源' : '音乐'}
               </p>
             )}
           </div>
