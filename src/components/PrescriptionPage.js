@@ -552,7 +552,7 @@ const DrinkCard = ({ data, moodContext, cardBgColor, cardBorderColor, accentColo
 
   return (
     <div 
-      className="w-full rounded-2xl shadow-sm overflow-hidden cursor-pointer transition-transform active:scale-[0.98]"
+      className="w-full rounded-2xl shadow-sm overflow-hidden cursor-pointer transition-transform active:scale-[0.98] flex"
       style={{ 
         backgroundColor: cardBgColor,
         borderWidth: '1px',
@@ -562,32 +562,29 @@ const DrinkCard = ({ data, moodContext, cardBgColor, cardBorderColor, accentColo
       role="button"
       tabIndex={0}
     >
-      {/* 饮品图片 */}
+      {/* 左侧饮品图片 */}
       {imageUrl && (
         <div 
-          className="h-40 bg-cover bg-center"
+          className="w-28 flex-shrink-0 bg-cover bg-center rounded-l-2xl"
           style={{ backgroundImage: `url(${imageUrl})` }}
         />
       )}
 
-      {/* 饮品信息 */}
-      <div className="p-4">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <div 
-              className="w-8 h-8 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: cardBorderColor }}
-            >
-              <Wine size={16} style={{ color: cardTextColor }} />
-            </div>
-            <span className="text-sm font-medium" style={{ color: cardTextColor }}>今日饮品</span>
+      {/* 右侧饮品信息 */}
+      <div className="flex-1 p-3 flex flex-col justify-center min-w-0">
+        <div className="flex items-center gap-1.5 mb-1">
+          <div 
+            className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: cardBorderColor }}
+          >
+            <Wine size={12} style={{ color: cardTextColor }} />
           </div>
-          {/* 点击查看详情提示 */}
-          <ChevronRight size={18} className="text-gray-400" />
+          <span className="text-xs font-medium" style={{ color: cardTextColor }}>今日饮品</span>
+          <ChevronRight size={14} className="text-gray-400 ml-auto flex-shrink-0" />
         </div>
         
         <h3 
-          className="font-bold text-gray-800 text-lg"
+          className="font-bold text-gray-800 text-base leading-tight truncate"
           style={{ fontFamily: '"Songti SC", "STKaiti", "KaiTi", serif' }}
         >
           {drinkName}
@@ -596,7 +593,7 @@ const DrinkCard = ({ data, moodContext, cardBgColor, cardBorderColor, accentColo
         {/* 饮品推荐语 */}
         {recommendText && (
           <p 
-            className="text-sm text-gray-500 mt-1 leading-relaxed italic"
+            className="text-xs text-gray-500 mt-1 leading-snug line-clamp-2"
             style={{ fontFamily: '"Songti SC", "STKaiti", "KaiTi", serif' }}
           >
             {recommendText}
@@ -605,11 +602,11 @@ const DrinkCard = ({ data, moodContext, cardBgColor, cardBorderColor, accentColo
         
         {/* 哲学标签 */}
         {(data.philosophy_tags || philosophy?.tags) && (
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {(data.philosophy_tags || philosophy?.tags || []).slice(0, 3).map((tag, i) => (
+          <div className="mt-2 flex flex-wrap gap-1">
+            {(data.philosophy_tags || philosophy?.tags || []).slice(0, 2).map((tag, i) => (
               <span 
                 key={i}
-                className="text-xs px-2.5 py-1 rounded-full"
+                className="text-xs px-2 py-0.5 rounded-full"
                 style={{ backgroundColor: cardBorderColor, color: accentColor }}
               >
                 {tag}
