@@ -212,19 +212,24 @@ const MoodInputBar = ({
       {/* 胶囊输入框 */}
       <div className="px-4 pb-[calc(env(safe-area-inset-bottom,0px)+16px)]">
         <div 
-          className="flex items-center h-12 bg-white/90 backdrop-blur-xl 
-                     rounded-full border border-gray-200/60 shadow-lg px-4
-                     focus-within:border-amber-300/60 focus-within:shadow-amber-100/50 transition-all"
+          className="flex items-center h-14 bg-white/95 backdrop-blur-2xl 
+                     rounded-full border border-gray-200/70 shadow-xl px-5
+                     focus-within:border-amber-400/60 focus-within:shadow-amber-100/60 transition-all duration-300"
           style={{
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8)'
+            boxShadow: '0 6px 24px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9)',
+            borderRadius: '32px'
           }}
         >
           {/* 左侧切换按钮 */}
           <button
             onClick={() => setInputMode(inputMode === 'voice' ? 'text' : 'voice')}
-            className="w-8 h-8 flex items-center justify-center rounded-full mr-2 flex-shrink-0
-                       hover:bg-gray-100 active:scale-95 transition-all"
+            className="w-10 h-10 flex items-center justify-center rounded-full mr-3 flex-shrink-0
+                       hover:bg-gray-100 active:scale-95 transition-all duration-200"
             aria-label={inputMode === 'voice' ? '切换到键盘输入' : '切换到语音输入'}
+            style={{ 
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+              backgroundColor: 'rgba(255, 255, 255, 0.8)'
+            }}
           >
             {inputMode === 'voice' ? (
               <Keyboard size={18} className="text-gray-500" />
@@ -240,7 +245,7 @@ const MoodInputBar = ({
               <div className="flex-1 relative">
                 {!value && (
                   <span
-                    className="absolute inset-y-0 left-0 flex items-center text-gray-400 text-sm pointer-events-none"
+                    className="absolute inset-y-0 left-0 flex items-center text-gray-400 text-sm pointer-events-none transition-opacity duration-200"
                     style={{ fontFamily: '"Songti SC", "STKaiti", "KaiTi", serif' }}
                   >
                     {MOOD_INPUT_PLACEHOLDERS[placeholderIndex]}
@@ -248,8 +253,11 @@ const MoodInputBar = ({
                 )}
                 <input
                   className="bg-transparent border-none focus:outline-none focus:ring-0 
-                             w-full text-sm text-gray-800 h-full"
-                  style={{ fontFamily: '"Songti SC", "STKaiti", "KaiTi", serif' }}
+                             w-full text-sm text-gray-800 h-full px-2"
+                  style={{ 
+                    fontFamily: '"Songti SC", "STKaiti", "KaiTi", serif',
+                    letterSpacing: '0.05em'
+                  }}
                   placeholder=""
                   value={value}
                   onChange={(e) => onChange(e.target.value)}
@@ -263,11 +271,16 @@ const MoodInputBar = ({
               <button 
                 onClick={handleSubmit}
                 disabled={isLoading || disabled || (!value?.trim() && !selectedTag)}
-                className={`w-9 h-9 flex items-center justify-center rounded-full ml-2
-                           transition-all duration-200 flex-shrink-0
+                className={`w-10 h-10 flex items-center justify-center rounded-full ml-3
+                           transition-all duration-300 flex-shrink-0
                            ${(value?.trim() || selectedTag) && !isLoading && !disabled
-                             ? 'bg-gradient-to-br from-amber-400 to-orange-500 shadow-md hover:shadow-lg hover:scale-105 active:scale-95' 
+                             ? 'bg-gradient-to-br from-amber-400 to-orange-500 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95' 
                              : 'bg-gray-100 cursor-not-allowed'}`}
+                style={{ 
+                  boxShadow: (value?.trim() || selectedTag) && !isLoading && !disabled 
+                    ? '0 4px 12px rgba(245, 158, 11, 0.3)' 
+                    : '0 2px 6px rgba(0, 0, 0, 0.05)'
+                }}
                 aria-label="发送"
               >
                 {isLoading ? (
@@ -285,15 +298,22 @@ const MoodInputBar = ({
             <>
               <div 
                 className={`flex-1 flex items-center justify-center cursor-pointer select-none
-                           transition-all duration-150 rounded-full mx-1
-                           ${isRecording ? 'bg-red-50 scale-105' : 'active:bg-gray-50 active:scale-98'}`}
+                           transition-all duration-200 rounded-full mx-1 px-6 py-2
+                           ${isRecording ? 'bg-red-50 scale-105' : 'hover:bg-gray-50 active:bg-gray-100 active:scale-98'}`}
                 onMouseDown={handlePressStart}
                 onMouseUp={handlePressEnd}
                 onMouseLeave={isRecording ? handlePressEnd : undefined}
                 onTouchStart={handlePressStart}
                 onTouchEnd={handlePressEnd}
                 onTouchCancel={handlePressEnd}
-                style={{ touchAction: 'none' }}
+                onTouchMove={(e) => e.preventDefault()}
+                style={{ 
+                  touchAction: 'none',
+                  userSelect: 'none',
+                  WebkitUserSelect: 'none',
+                  boxShadow: isRecording ? '0 4px 12px rgba(239, 68, 68, 0.2)' : '0 2px 8px rgba(0, 0, 0, 0.06)',
+                  backgroundColor: isRecording ? 'rgba(254, 242, 242, 0.8)' : 'rgba(255, 255, 255, 0.8)'
+                }}
               >
                 <span 
                   className={`text-sm transition-colors duration-150
@@ -311,11 +331,16 @@ const MoodInputBar = ({
                 <button 
                   onClick={handleSubmit}
                   disabled={isLoading || disabled}
-                  className={`w-9 h-9 flex items-center justify-center rounded-full ml-1
-                             transition-all duration-200 flex-shrink-0
+                  className={`w-10 h-10 flex items-center justify-center rounded-full ml-3
+                             transition-all duration-300 flex-shrink-0
                              ${!isLoading && !disabled
-                               ? 'bg-gradient-to-br from-amber-400 to-orange-500 shadow-md hover:shadow-lg hover:scale-105 active:scale-95' 
+                               ? 'bg-gradient-to-br from-amber-400 to-orange-500 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95' 
                                : 'bg-gray-100 cursor-not-allowed'}`}
+                  style={{ 
+                    boxShadow: !isLoading && !disabled 
+                      ? '0 4px 12px rgba(245, 158, 11, 0.3)' 
+                      : '0 2px 6px rgba(0, 0, 0, 0.05)'
+                  }}
                   aria-label="发送"
                 >
                   {isLoading ? (
