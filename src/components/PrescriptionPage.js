@@ -9,9 +9,9 @@ const DEFAULT_TODAY_COLOR = {
   desc: '静而不沉'
 };
 
-const PrescriptionPage = ({ 
-  isOpen, 
-  onClose, 
+const PrescriptionPage = ({
+  isOpen,
+  onClose,
   todayColor = DEFAULT_TODAY_COLOR,
   quoteContent = null,
   sentenceContent = null,  // 每日心理锚点句
@@ -72,11 +72,11 @@ const PrescriptionPage = ({
     const b = Math.round(parseInt(h.substr(4, 2), 16) * factor);
     return `rgb(${r}, ${g}, ${b})`;
   };
-  
+
   const cardBgColor = hexToRgba(todayColor.hex, 0.15);  // 15% 透明度背景
   const cardBorderColor = hexToRgba(todayColor.hex, 0.3); // 30% 透明度边框
   const accentColor = todayColor.hex; // 实色用于按钮
-  
+
   // 卡片内文字颜色：如果今日色太浅，使用加深版本以保证可读性
   const colorLuminance = getLuminance(todayColor.hex);
   const cardTextColor = colorLuminance > 0.55 ? darkenColor(todayColor.hex, 0.45) : todayColor.hex;
@@ -87,55 +87,55 @@ const PrescriptionPage = ({
   const quoteText = sentenceContent || quoteContent;
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-[100] flex flex-col bg-white"
       style={{ animation: 'slideUpFadeIn 0.4s ease-out' }}
     >
-      {/* ========== 单一滚动容器 ========== */}
-      <div className="flex-1 overflow-y-auto">
+      {/* ========== 全屏固定容器 ========== */}
+      <div className="flex-1 overflow-hidden flex flex-col">
         {/* ========== 今日色区域（内容自适应 + 一句话）========== */}
-        <div 
-          className="flex flex-col items-center px-6 relative"
-          style={{ backgroundColor: todayColor.hex, paddingTop: '32px', paddingBottom: '28px' }}
+        <div
+          className="flex flex-col items-center px-6 relative flex-shrink-0"
+          style={{ backgroundColor: todayColor.hex, paddingTop: '20px', paddingBottom: '16px' }}
         >
           {/* 关闭按钮 */}
-          <button 
-            onClick={onClose} 
-            className={`absolute top-[calc(env(safe-area-inset-top,0px)+12px)] left-4 p-2 
+          <button
+            onClick={onClose}
+            className={`absolute top-4 left-4 p-2 
                        rounded-full hover:bg-black/10 transition-colors ${iconColor}`}
             aria-label="关闭"
           >
-            <X size={24} />
+            <X size={20} />
           </button>
-          
+
           {/* 颜色名称（24px，宋体，居中） */}
-          <h1 
+          <h1
             className={`text-2xl tracking-[0.15em] ${textColor}`}
             style={{ fontFamily: '"Songti SC", "STKaiti", "KaiTi", serif', fontWeight: 600 }}
           >
             {todayColor.name}
           </h1>
-          
+
           {/* 颜色描述（14px，副标题，居中） */}
           <span className={`text-sm mt-1.5 tracking-wider ${textColorMuted}`}>
             {todayColor.desc}
           </span>
-          
+
           {/* 一句话（如果有） */}
           {quoteText && (
             <>
               {/* 细分隔线 */}
-              <div 
-                className="w-12 mt-5 mb-4"
-                style={{ 
-                  height: '1px', 
-                  backgroundColor: textTheme === 'dark' ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.3)' 
+              <div
+                className="w-8 mt-3 mb-3"
+                style={{
+                  height: '1px',
+                  backgroundColor: textTheme === 'dark' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.2)'
                 }}
               />
               {/* 一句话文本（16px，居中） */}
-              <p 
+              <p
                 className={`text-sm text-center leading-relaxed max-w-[260px] ${textColor}`}
-                style={{ 
+                style={{
                   fontFamily: '"Songti SC", "STKaiti", "KaiTi", serif',
                   opacity: 0.85
                 }}
@@ -147,28 +147,28 @@ const PrescriptionPage = ({
         </div>
 
         {/* ========== 处方卡区域 ========== */}
-        <div className="px-4 py-4" style={{ backgroundColor: 'rgba(255,255,255,0.98)' }}>
-          <div className="flex flex-col gap-4">
+        <div className="px-4 py-2 flex-1 overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.98)' }}>
+          <div className="flex flex-col gap-2.5 h-full">
             {/* 活动卡 */}
-            <ActivityCard 
+            <ActivityCard
               data={activityRecommendation}
               cardBgColor={cardBgColor}
               cardBorderColor={cardBorderColor}
               accentColor={accentColor}
               cardTextColor={cardTextColor}
             />
-            
+
             {/* 音乐卡 */}
-            <MusicCard 
+            <MusicCard
               data={musicRecommendation}
               cardBgColor={cardBgColor}
               cardBorderColor={cardBorderColor}
               accentColor={accentColor}
               cardTextColor={cardTextColor}
             />
-            
+
             {/* 饮品卡 */}
-            <DrinkCard 
+            <DrinkCard
               data={drinkRecommendation}
               moodContext={moodContext}
               cardBgColor={cardBgColor}
@@ -182,14 +182,14 @@ const PrescriptionPage = ({
       </div>
 
       {/* ========== 底部按钮 ========== */}
-      <div className="bg-white flex-shrink-0 px-6 py-4 pb-[calc(env(safe-area-inset-bottom,0px)+16px)] border-t border-gray-100">
-        <button 
+      <div className="bg-white flex-shrink-0 px-6 py-4 border-t border-gray-100">
+        <button
           onClick={handleSave}
           className="w-full h-12 rounded-full text-white font-medium shadow-lg active:scale-[0.98] transition-transform
                      flex items-center justify-center gap-2"
-          style={{ 
+          style={{
             fontFamily: '"Songti SC", "STKaiti", "KaiTi", serif',
-            backgroundColor: accentColor 
+            backgroundColor: accentColor
           }}
         >
           <span>💾</span>
@@ -229,7 +229,7 @@ const ActivityCard = ({ data, cardBgColor, cardBorderColor, accentColor, cardTex
   // 根据内容推断仪式类型和图标
   const inferRitualType = (ritual) => {
     const text = (ritual.name || ritual.title || '') + (ritual.how || ritual.content || '');
-    
+
     // 身体类
     if (/吃|喝|茶|咖啡|水|热|温|粥|汤|食/.test(text)) {
       return { icon: '🍵', typeName: '进食' };
@@ -237,7 +237,7 @@ const ActivityCard = ({ data, cardBgColor, cardBorderColor, accentColor, cardTex
     if (/闻|香|气味|精油|檀|薰|熏/.test(text)) {
       return { icon: '🌿', typeName: '气味' };
     }
-    
+
     // 空间类
     if (/方位|方向|朝|东|南|西|北|面向/.test(text)) {
       return { icon: '🧭', typeName: '方位' };
@@ -245,7 +245,7 @@ const ActivityCard = ({ data, cardBgColor, cardBorderColor, accentColor, cardTex
     if (/摆|放|供|物|花|植|绿/.test(text)) {
       return { icon: '🪴', typeName: '供物' };
     }
-    
+
     // 行为类
     if (/时|点|早|晚|午|分钟|小时/.test(text)) {
       return { icon: '⏰', typeName: '时机' };
@@ -256,7 +256,7 @@ const ActivityCard = ({ data, cardBgColor, cardBorderColor, accentColor, cardTex
     if (/整理|计划|写|记|想|呼吸|冥想|静|摸|触/.test(text)) {
       return { icon: '✨', typeName: '速效' };
     }
-    
+
     // 默认
     return { icon: '🔮', typeName: '仪式' };
   };
@@ -264,9 +264,9 @@ const ActivityCard = ({ data, cardBgColor, cardBorderColor, accentColor, cardTex
   // 没数据时显示占位
   if (!data) {
     return (
-      <div 
+      <div
         className="w-full rounded-2xl p-4 shadow-sm flex items-center justify-center"
-        style={{ 
+        style={{
           backgroundColor: cardBgColor,
           borderWidth: '1px',
           borderColor: cardBorderColor,
@@ -286,33 +286,19 @@ const ActivityCard = ({ data, cardBgColor, cardBorderColor, accentColor, cardTex
   const wuxingNote = data.wuxingNote || data.wuxing || '';
 
   return (
-    <div 
+    <div
       className="w-full rounded-2xl p-4 shadow-sm"
-      style={{ 
+      style={{
         backgroundColor: cardBgColor,
         borderWidth: '1px',
         borderColor: cardBorderColor
       }}
     >
-      {/* 头部：图标 + 标题 + 五行标记 */}
-      <div className="flex items-center justify-between mb-3">
+      {/* 头部：图标 + 标题 */}
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <div 
-            className="w-8 h-8 rounded-full flex items-center justify-center"
-            style={{ backgroundColor: cardBorderColor }}
-          >
-            <Flame size={16} style={{ color: cardTextColor }} />
-          </div>
-          <span className="text-sm font-medium" style={{ color: cardTextColor }}>今日小仪式</span>
+          <span className="text-xs font-bold" style={{ color: cardTextColor }}>今日小仪式</span>
         </div>
-        {wuxingNote && (
-          <span 
-            className="text-[11px] px-2 py-0.5 rounded-full"
-            style={{ backgroundColor: cardBorderColor, color: cardTextColor }}
-          >
-            {wuxingNote}
-          </span>
-        )}
       </div>
 
       {/* 三条小仪式 */}
@@ -325,56 +311,35 @@ const ActivityCard = ({ data, cardBgColor, cardBorderColor, accentColor, cardTex
           const title = ritual.title || ritual.name || '仪式';
           const content = ritual.content || ritual.how || ritual.how_steps || '';
           const reason = ritual.reason || ritual.why_reason || ritual.why || '';
-          
+
           const isCompleted = completedRituals[index];
-          
+
           return (
-            <div 
+            <div
               key={index}
-              className="rounded-xl p-3 flex items-start gap-3"
-              style={{ backgroundColor: 'rgba(255,255,255,0.6)' }}
+              className="rounded-lg p-2.5 flex items-start gap-2"
+              style={{ backgroundColor: 'rgba(255,255,255,0.5)' }}
             >
-              {/* 左侧图标 */}
-              <div 
-                className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-lg ${isCompleted ? 'opacity-50' : ''}`}
-                style={{ backgroundColor: cardBorderColor }}
-              >
-                {icon}
-              </div>
-              
-              {/* 中间内容 */}
+              {/* 内容 */}
               <div className="flex-1 min-w-0">
-                {/* 类型标签 */}
-                <span 
-                  className={`text-[10px] px-1.5 py-0.5 rounded-full mb-1 inline-block ${isCompleted ? 'opacity-50' : ''}`}
-                  style={{ backgroundColor: cardBorderColor, color: cardTextColor }}
-                >
-                  {typeName}
-                </span>
-                
-                {/* 仪式标题 */}
-                <h4 
-                  className={`font-bold text-base leading-tight ${isCompleted ? 'text-gray-400 line-through' : 'text-gray-800'}`}
+                <h4
+                  className={`font-bold text-sm leading-tight ${isCompleted ? 'text-gray-400 line-through' : 'text-gray-800'}`}
                   style={{ fontFamily: '"Songti SC", "STKaiti", "KaiTi", serif' }}
                 >
                   {title}
                 </h4>
-                
-                {/* 具体内容 */}
                 {content && (
-                  <p className={`text-xs mt-1 leading-relaxed ${isCompleted ? 'text-gray-300' : 'text-gray-600'}`}>
+                  <p className={`text-[11px] mt-0.5 leading-snug ${isCompleted ? 'text-gray-300' : 'text-gray-600'}`}>
                     {content}
                   </p>
                 )}
-                
-                {/* 五行依据 */}
                 {reason && (
-                  <p className={`text-[11px] mt-1.5 leading-relaxed italic ${isCompleted ? 'text-gray-300' : 'text-gray-400'}`}>
+                  <p className={`text-[10px] mt-1 leading-snug italic ${isCompleted ? 'text-gray-300' : 'text-gray-400'}`}>
                     {reason}
                   </p>
                 )}
               </div>
-              
+
               {/* 右侧完成按钮 */}
               <button
                 onClick={(e) => {
@@ -419,7 +384,7 @@ const MusicCard = ({ data, cardBgColor, cardBorderColor, accentColor, cardTextCo
   // 搜索并播放环境音
   const searchAndPlay = async () => {
     const query = data?.freesound_query || data?.search_term || 'rain ambient';
-    
+
     setIsLoading(true);
     setError(null);
 
@@ -473,9 +438,9 @@ const MusicCard = ({ data, cardBgColor, cardBorderColor, accentColor, cardTextCo
   // 加载中状态
   if (!data) {
     return (
-      <div 
+      <div
         className="w-full rounded-2xl p-4 shadow-sm flex items-center justify-center"
-        style={{ 
+        style={{
           backgroundColor: cardBgColor,
           borderWidth: '1px',
           borderColor: cardBorderColor,
@@ -491,9 +456,9 @@ const MusicCard = ({ data, cardBgColor, cardBorderColor, accentColor, cardTextCo
   }
 
   return (
-    <div 
+    <div
       className="w-full rounded-2xl p-4 shadow-sm"
-      style={{ 
+      style={{
         backgroundColor: cardBgColor,
         borderWidth: '1px',
         borderColor: cardBorderColor
@@ -502,7 +467,7 @@ const MusicCard = ({ data, cardBgColor, cardBorderColor, accentColor, cardTextCo
       {/* 头部 */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div 
+          <div
             className="w-8 h-8 rounded-full flex items-center justify-center"
             style={{ backgroundColor: cardBorderColor }}
           >
@@ -512,13 +477,13 @@ const MusicCard = ({ data, cardBgColor, cardBorderColor, accentColor, cardTextCo
             {data.scene_name || '环境音'}
           </span>
         </div>
-        
+
         {/* 播放按钮 */}
         <button
           onClick={togglePlay}
           disabled={isLoading}
           className="w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-95"
-          style={{ 
+          style={{
             backgroundColor: isPlaying ? accentColor : cardBorderColor,
             color: isPlaying ? '#fff' : accentColor
           }}
@@ -532,22 +497,22 @@ const MusicCard = ({ data, cardBgColor, cardBorderColor, accentColor, cardTextCo
           )}
         </button>
       </div>
-      
+
       {/* 氛围描述 */}
       {data.vibe_desc && (
-        <p 
+        <p
           className="text-gray-700 text-sm leading-relaxed mb-3"
           style={{ fontFamily: '"Songti SC", "STKaiti", "KaiTi", serif' }}
         >
           {data.vibe_desc}
         </p>
       )}
-      
+
       {/* 关键词标签 */}
       {data.keywords && data.keywords.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-3">
           {data.keywords.slice(0, 4).map((keyword, i) => (
-            <span 
+            <span
               key={i}
               className="text-xs px-2.5 py-1 rounded-full"
               style={{ backgroundColor: cardBorderColor, color: accentColor }}
@@ -557,21 +522,21 @@ const MusicCard = ({ data, cardBgColor, cardBorderColor, accentColor, cardTextCo
           ))}
         </div>
       )}
-      
+
       {/* 当前播放信息 */}
       {currentSound && (
         <div className="text-xs text-gray-400 mb-2">
           正在播放: {currentSound.name} ({currentSound.duration}s)
         </div>
       )}
-      
+
       {/* 错误提示 */}
       {error && (
         <div className="text-xs text-red-400 mb-2">
           {error}
         </div>
       )}
-      
+
 
     </div>
   );
@@ -581,9 +546,9 @@ const MusicCard = ({ data, cardBgColor, cardBorderColor, accentColor, cardTextCo
 const DrinkCard = ({ data, moodContext, cardBgColor, cardBorderColor, accentColor, cardTextColor, onClick }) => {
   if (!data) {
     return (
-      <div 
+      <div
         className="w-full rounded-2xl p-4 shadow-sm flex items-center justify-center"
-        style={{ 
+        style={{
           backgroundColor: cardBgColor,
           borderWidth: '1px',
           borderColor: cardBorderColor,
@@ -600,15 +565,15 @@ const DrinkCard = ({ data, moodContext, cardBgColor, cardBorderColor, accentColo
 
   const imageUrl = data.image || data.strDrinkThumb;
   const drinkName = data.name_cn || data.strDrink || data.name;
-  
+
   // 生成饮品推荐语：优先用 matchReason，其次用 philosophy.quote（带上下文）
   const philosophy = data.dimensions ? generatePhilosophyTags(data.dimensions, moodContext, drinkName) : null;
   const recommendText = data.matchReason || data.reason || (philosophy?.quote) || '';
 
   return (
-    <div 
+    <div
       className="w-full rounded-2xl shadow-sm overflow-hidden cursor-pointer transition-transform active:scale-[0.98] flex"
-      style={{ 
+      style={{
         backgroundColor: cardBgColor,
         borderWidth: '1px',
         borderColor: cardBorderColor
@@ -619,7 +584,7 @@ const DrinkCard = ({ data, moodContext, cardBgColor, cardBorderColor, accentColo
     >
       {/* 左侧饮品图片 */}
       {imageUrl && (
-        <div 
+        <div
           className="w-28 flex-shrink-0 bg-cover bg-center rounded-l-2xl"
           style={{ backgroundImage: `url(${imageUrl})` }}
         />
@@ -628,7 +593,7 @@ const DrinkCard = ({ data, moodContext, cardBgColor, cardBorderColor, accentColo
       {/* 右侧饮品信息 */}
       <div className="flex-1 p-3 flex flex-col justify-center min-w-0">
         <div className="flex items-center gap-1.5 mb-1">
-          <div 
+          <div
             className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
             style={{ backgroundColor: cardBorderColor }}
           >
@@ -637,29 +602,29 @@ const DrinkCard = ({ data, moodContext, cardBgColor, cardBorderColor, accentColo
           <span className="text-xs font-medium" style={{ color: cardTextColor }}>今日饮品</span>
           <ChevronRight size={14} className="text-gray-400 ml-auto flex-shrink-0" />
         </div>
-        
-        <h3 
+
+        <h3
           className="font-bold text-gray-800 text-base leading-tight truncate"
           style={{ fontFamily: '"Songti SC", "STKaiti", "KaiTi", serif' }}
         >
           {drinkName}
         </h3>
-        
+
         {/* 饮品推荐语 */}
         {recommendText && (
-          <p 
+          <p
             className="text-xs text-gray-500 mt-1 leading-snug line-clamp-2"
             style={{ fontFamily: '"Songti SC", "STKaiti", "KaiTi", serif' }}
           >
             {recommendText}
           </p>
         )}
-        
+
         {/* 哲学标签 */}
         {(data.philosophy_tags || philosophy?.tags) && (
           <div className="mt-2 flex flex-wrap gap-1">
             {(data.philosophy_tags || philosophy?.tags || []).slice(0, 2).map((tag, i) => (
-              <span 
+              <span
                 key={i}
                 className="text-xs px-2 py-0.5 rounded-full"
                 style={{ backgroundColor: cardBorderColor, color: accentColor }}
