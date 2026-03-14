@@ -273,32 +273,49 @@ app.get('/api/music/search', async (req, res) => {
         // 使用多个API源，尝试获取真实数据
         let results = [];
         
-        // 尝试使用网易云音乐API
+        // 尝试使用音乐API获取真实歌曲和播放链接
         try {
-          const neteaseUrl = `https://music-api.heheda.top/search?keywords=${encodeURIComponent(query)}&limit=${page_size}`;
-          const neteaseRes = await currentFetch(neteaseUrl, {
+          // 使用 meting-api 获取歌曲详情（包含真实播放URL）
+          const searchUrl = `https://api.meting.cf/netease/search?keyword=${encodeURIComponent(query)}&limit=${page_size}`;
+          const searchRes = await currentFetch(searchUrl, {
             headers: { 'Accept': 'application/json' }
           });
           
-          if (neteaseRes.ok) {
-            const neteaseData = await neteaseRes.json();
-            if (neteaseData.result && neteaseData.result.songs) {
-              results = neteaseData.result.songs.map(song => ({
-                id: song.id,
-                name: song.name,
-                artist: song.artists.map(a => a.name).join(', '),
-                album: song.album.name,
-                duration: Math.round(song.duration / 1000),
-                previewUrl: `https://music.163.com/song/media/outer/url?id=${song.id}.mp3`,
-                coverUrl: song.album.picUrl
-              }));
+          if (searchRes.ok) {
+            const searchData = await searchRes.json();
+            if (Array.isArray(searchData) && searchData.length > 0) {
+              // 获取每个歌曲的播放URL
+              for (const song of searchData.slice(0, page_size)) {
+                try {
+                  const urlRes = await currentFetch(`https://api.meting.cf/netease/url?id=${song.id}`, {
+                    headers: { 'Accept': 'application/json' }
+                  });
+                  
+                  if (urlRes.ok) {
+                    const urlData = await urlRes.json();
+                    if (urlData.url) {
+                      results.push({
+                        id: song.id,
+                        name: song.name,
+                        artist: song.artist,
+                        album: song.album || '未知专辑',
+                        duration: song.duration || 0,
+                        previewUrl: urlData.url,
+                        coverUrl: song.cover
+                      });
+                    }
+                  }
+                } catch (urlError) {
+                  console.log(`[YYFang] Failed to get URL for song ${song.id}`);
+                }
+              }
             }
           }
         } catch (e) {
-          console.log('[YYFang] NetEase API failed, trying alternative');
+          console.log('[YYFang] Meting API failed:', e.message);
         }
         
-        // 如果网易云API失败，使用备用数据
+        // 如果API失败或没有结果，使用备用数据
         if (results.length === 0) {
           results = [
             {
