@@ -9,7 +9,7 @@ const SideDrawer = ({
 }) => {
   const menuItems = [
     { id: 'activity', label: '活动栏', icon: Flame, ready: false },
-    { id: 'music', label: '音乐库', icon: Music, ready: false },
+    { id: 'music', label: '音乐库', icon: Music, ready: true },
     { id: 'drinks', label: '饮品库', icon: Wine, ready: true },
     { id: 'mine', label: '我的', icon: User, ready: true },
   ];

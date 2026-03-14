@@ -21,6 +21,7 @@ import { generatePhilosophyTags } from './engine/philosophyTags';
 import { fetchLiveQuotes } from './api/quoteGenerator';
 import { translateDrinkName, translateIngredient } from './data/translations';
 import MineSection from './components/MineSection';
+import MusicLibraryView from './components/MusicLibraryView';
 import SideDrawer from './components/SideDrawer';
 import MoodInputBar from './components/MoodInputBar';
 import PrescriptionPage from './components/PrescriptionPage';
@@ -1353,7 +1354,7 @@ const App = () => {
 
   // === 新增：侧边栏 + 处方页状态 ===
   const [sideDrawerOpen, setSideDrawerOpen] = useState(false);
-  const [currentView, setCurrentView] = useState('home'); // 'home' | 'drinks' | 'mine'
+  const [currentView, setCurrentView] = useState('home'); // 'home' | 'drinks' | 'mine' | 'music'
   const [showPrescription, setShowPrescription] = useState(false);
   const [currentPrescription, setCurrentPrescription] = useState(null);
   const [prescriptionHistory, setPrescriptionHistory] = useState([]);
@@ -2197,6 +2198,15 @@ const App = () => {
             <CalendarView
               prescriptionHistory={prescriptionHistory}
               onSelectDate={showPrescriptionPage}
+              onBack={() => setCurrentView('home')}
+            />
+          </PageTransition>
+        )}
+
+        {/* === "音乐库"页面 === */}
+        {currentView === 'music' && !currentDrink && (
+          <PageTransition animation="fade" duration={400}>
+            <MusicLibraryView
               onBack={() => setCurrentView('home')}
             />
           </PageTransition>

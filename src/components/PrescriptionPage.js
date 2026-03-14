@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, Flame, Music, Wine, Sparkles, ExternalLink, ChevronRight, Check } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { X, Flame, Music, Wine, Sparkles, ChevronRight, Check, Play, Pause, Loader } from 'lucide-react';
 import { generatePhilosophyTags } from '../engine/philosophyTags';
 
 // 占位今日色数据
@@ -343,8 +343,79 @@ const ActivityCard = ({ data, cardBgColor, cardBorderColor, accentColor, cardTex
   );
 };
 
-// ========== 音乐卡（带网易云跳转）==========
+// ========== 音乐卡（环境音播放 + 网易云备用）==========
 const MusicCard = ({ data, cardBgColor, cardBorderColor, accentColor, cardTextColor }) => {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentSound, setCurrentSound] = useState(null);
+  const [error, setError] = useState(null);
+  const audioRef = useRef(null);
+
+  // 清理音频
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
+
+  // 搜索并播放环境音
+  const searchAndPlay = async () => {
+    const query = data?.freesound_query || data?.search_term || 'rain ambient';
+    
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetch(`/api/sounds/search?query=${encodeURIComponent(query)}&duration_min=30&duration_max=300`);
+      const result = await res.json();
+
+      if (!result.success || !result.results?.length) {
+        throw new Error('未找到匹配的环境音');
+      }
+
+      const sound = result.results[0];
+      if (!sound.previewUrl) {
+        throw new Error('音频链接不可用');
+      }
+
+      setCurrentSound(sound);
+
+      // 创建或复用 Audio 对象
+      if (!audioRef.current) {
+        audioRef.current = new Audio();
+        audioRef.current.loop = true;
+        audioRef.current.volume = 0.7;
+      }
+
+      audioRef.current.src = sound.previewUrl;
+      await audioRef.current.play();
+      setIsPlaying(true);
+
+    } catch (err) {
+      console.error('播放失败:', err);
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 切换播放/暂停
+  const togglePlay = async () => {
+    if (isPlaying && audioRef.current) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else if (audioRef.current?.src) {
+      await audioRef.current.play();
+      setIsPlaying(true);
+    } else {
+      await searchAndPlay();
+    }
+  };
+
+  // 加载中状态
   if (!data) {
     return (
       <div 
@@ -358,16 +429,11 @@ const MusicCard = ({ data, cardBgColor, cardBorderColor, accentColor, cardTextCo
       >
         <div className="flex items-center gap-2">
           <Sparkles size={16} style={{ color: accentColor }} />
-          <span className="text-gray-400">音乐推荐生成中...</span>
+          <span className="text-gray-400">环境音推荐生成中...</span>
         </div>
       </div>
     );
   }
-
-  const searchTerm = data.search_term || (data.keywords ? data.keywords.join(' ') : '');
-  const neteaseSearchUrl = searchTerm 
-    ? `https://music.163.com/#/search/m/?s=${encodeURIComponent(searchTerm)}`
-    : null;
 
   return (
     <div 
@@ -379,14 +445,37 @@ const MusicCard = ({ data, cardBgColor, cardBorderColor, accentColor, cardTextCo
       }}
     >
       {/* 头部 */}
-      <div className="flex items-center gap-2 mb-3">
-        <div 
-          className="w-8 h-8 rounded-full flex items-center justify-center"
-          style={{ backgroundColor: cardBorderColor }}
-        >
-          <Music size={16} style={{ color: cardTextColor }} />
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <div 
+            className="w-8 h-8 rounded-full flex items-center justify-center"
+            style={{ backgroundColor: cardBorderColor }}
+          >
+            <Music size={16} style={{ color: cardTextColor }} />
+          </div>
+          <span className="text-sm font-medium" style={{ color: cardTextColor }}>
+            {data.scene_name || '环境音'}
+          </span>
         </div>
-        <span className="text-sm font-medium" style={{ color: cardTextColor }}>音乐氛围</span>
+        
+        {/* 播放按钮 */}
+        <button
+          onClick={togglePlay}
+          disabled={isLoading}
+          className="w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-95"
+          style={{ 
+            backgroundColor: isPlaying ? accentColor : cardBorderColor,
+            color: isPlaying ? '#fff' : accentColor
+          }}
+        >
+          {isLoading ? (
+            <Loader size={18} className="animate-spin" />
+          ) : isPlaying ? (
+            <Pause size={18} />
+          ) : (
+            <Play size={18} style={{ marginLeft: '2px' }} />
+          )}
+        </button>
       </div>
       
       {/* 氛围描述 */}
@@ -414,27 +503,21 @@ const MusicCard = ({ data, cardBgColor, cardBorderColor, accentColor, cardTextCo
         </div>
       )}
       
-      {/* BPM */}
-      {data.bpm && (
-        <p className="text-xs text-gray-400 mb-3">BPM: {data.bpm}</p>
+      {/* 当前播放信息 */}
+      {currentSound && (
+        <div className="text-xs text-gray-400 mb-2">
+          正在播放: {currentSound.name} ({currentSound.duration}s)
+        </div>
       )}
       
-      {/* 网易云跳转按钮 */}
-      {neteaseSearchUrl && (
-        <a
-          href={neteaseSearchUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-medium transition-opacity hover:opacity-80"
-          style={{ 
-            backgroundColor: cardBorderColor,
-            color: accentColor
-          }}
-        >
-          <ExternalLink size={14} />
-          <span>去网易云搜索</span>
-        </a>
+      {/* 错误提示 */}
+      {error && (
+        <div className="text-xs text-red-400 mb-2">
+          {error}
+        </div>
       )}
+      
+
     </div>
   );
 };

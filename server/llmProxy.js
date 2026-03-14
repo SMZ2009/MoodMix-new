@@ -124,6 +124,77 @@ app.get('/api/cocktail_image/:imageName', async (req, res) => {
   }
 });
 
+// ═══════════════════════════════════════════
+// Freesound 环境音搜索代理（解决 CORS 问题）
+// ═══════════════════════════════════════════
+app.get('/api/sounds/search', async (req, res) => {
+  const freesoundApiKey = process.env.FREESOUND_API_KEY;
+  
+  if (!freesoundApiKey) {
+    return res.status(500).json({ 
+      error: 'FREESOUND_API_KEY 未配置',
+      success: false,
+      results: [] 
+    });
+  }
+
+  const { query, duration_min = 30, duration_max = 180, page_size = 5 } = req.query;
+
+  if (!query) {
+    return res.status(400).json({ error: '缺少 query 参数', success: false, results: [] });
+  }
+
+  const targetUrl = `https://freesound.org/apiv2/search/text/?` + 
+    `query=${encodeURIComponent(query)}` +
+    `&filter=duration:[${duration_min} TO ${duration_max}]` +
+    `&fields=id,name,description,previews,duration,tags,username` +
+    `&page_size=${page_size}` +
+    `&token=${freesoundApiKey}`;
+
+  console.log('[Freesound Proxy] Searching:', query);
+
+  try {
+    const currentFetch = await getFetch();
+    if (!currentFetch) {
+      return res.status(500).json({ error: 'Fetch implementation not found', success: false, results: [] });
+    }
+
+    const response = await currentFetch(targetUrl, {
+      headers: { 'Accept': 'application/json' }
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[Freesound] API Error:', response.status, errorText);
+      return res.status(response.status).json({ 
+        error: `Freesound API error: ${response.status}`,
+        success: false,
+        results: [] 
+      });
+    }
+
+    const data = await response.json();
+    
+    // 转换为前端友好格式
+    const results = (data.results || []).map(sound => ({
+      id: sound.id,
+      name: sound.name,
+      description: sound.description?.slice(0, 100) || '',
+      duration: Math.round(sound.duration),
+      previewUrl: sound.previews?.['preview-hq-mp3'] || sound.previews?.['preview-lq-mp3'],
+      tags: (sound.tags || []).slice(0, 5),
+      author: sound.username
+    }));
+
+    console.log(`[Freesound] Found ${results.length} sounds for "${query}"`);
+    res.json({ success: true, count: data.count || 0, results });
+
+  } catch (error) {
+    console.error('[Freesound Proxy Error]', error.message);
+    res.status(500).json({ error: error.message, success: false, results: [] });
+  }
+});
+
 // SiliconFlow API 配置
 const SILICONFLOW_API_URL = 'https://api.siliconflow.cn/v1/chat/completions';
 const MODEL_8B = process.env.SILICONFLOW_MODEL_8B || 'Qwen/Qwen2.5-7B-Instruct';

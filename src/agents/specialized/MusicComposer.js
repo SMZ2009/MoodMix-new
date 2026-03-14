@@ -1,20 +1,23 @@
 /**
- * MusicComposer - 音乐氛围推荐生成器
+ * MusicComposer - 环境音氛围推荐生成器
  * 
- * 职责：根据情绪状态推荐音乐氛围关键词（非具体歌曲）
+ * 职责：根据情绪状态推荐环境音场景（非具体歌曲）
  * 模型：Qwen3-8B（结构化关键词）
  * 
  * 输入：五行属性 + 极性 + 情绪强度
- * 输出：{ keywords, bpm, vibe_desc, platform_hint, search_term }
+ * 输出：{ keywords, vibe_desc, freesound_query, scene_name }
+ * 
+ * 注意：Freesound 适合雨声、白噪音、自然音，不适合推荐歌曲
+ *       改用「环境声音场景」替代「音乐歌单」
  */
 
 import { BaseComposer, WUXING_TONE_MAP } from './BaseComposer';
 import { 
-  MUSIC_MOODS, 
-  WUXING_MUSIC_MAPPING, 
-  getMusicRecommendation,
-  generateSearchKeywords,
-  getRandomVibeDescription 
+  AMBIENT_SCENES, 
+  WUXING_AMBIENT_MAPPING, 
+  getAmbientRecommendation,
+  generateFreesoundQuery,
+  getRandomSceneDescription 
 } from '../../data/musicKnowledgeBase';
 
 export class MusicComposer extends BaseComposer {
@@ -42,7 +45,7 @@ export class MusicComposer extends BaseComposer {
   }
 
   /**
-   * 核心处理：生成音乐推荐
+   * 核心处理：生成环境音推荐
    */
   async process(context) {
     const patternAnalysis = context.getIntermediate('patternAnalysis');
@@ -54,7 +57,7 @@ export class MusicComposer extends BaseComposer {
     const emotionIntensity = this.extractIntensity(moodData?.emotion);
     
     // 先用本地规则获取基础推荐
-    const baseRecommendation = getMusicRecommendation({
+    const baseRecommendation = getAmbientRecommendation({
       wuxing,
       polarity,
       emotionIntensity
@@ -62,28 +65,24 @@ export class MusicComposer extends BaseComposer {
     
     try {
       // 尝试调用LLM生成更个性化的描述
-      const systemPrompt = this.buildMusicSystemPrompt(patternAnalysis, baseRecommendation);
-      const userPrompt = this.buildMusicUserPrompt(moodData, baseRecommendation);
+      const systemPrompt = this.buildAmbientSystemPrompt(patternAnalysis, baseRecommendation);
+      const userPrompt = this.buildAmbientUserPrompt(moodData, baseRecommendation);
       
       const llmResult = await this.callLLM(systemPrompt, userPrompt, {
         endpoint: '/api/compose_music',
-        maxTokens: 100
+        maxTokens: 150
       });
       
       const parsed = this.parseJSONOutput(llmResult);
-      if (parsed && parsed.keywords && parsed.keywords.length > 0) {
-        this.log('SUCCESS', `LLM生成音乐推荐: ${parsed.vibe_desc || '成功'}`);
-        
-        // 生成搜索词（用于网易云跳转）
-        const searchTerm = parsed.search_term || this.generateSearchTerm(parsed.keywords, baseRecommendation);
+      if (parsed && parsed.freesound_query) {
+        this.log('SUCCESS', `LLM生成环境音推荐: ${parsed.scene_name || '成功'}`);
         
         const result = {
-          moodType: baseRecommendation.moodType,
-          keywords: parsed.keywords,
-          bpm: parsed.bpm || baseRecommendation.adjustedBpm,
+          sceneType: baseRecommendation.sceneType,
+          scene_name: parsed.scene_name || baseRecommendation.sceneName,
+          keywords: parsed.display_keywords || baseRecommendation.keywords,
           vibe_desc: parsed.vibe_desc || baseRecommendation.vibe,
-          platform_hint: parsed.platform_hint || baseRecommendation.searchTips,
-          search_term: searchTerm,
+          freesound_query: parsed.freesound_query,
           wuxingNote: baseRecommendation.wuxingNote,
           isAI: true,
           timestamp: new Date().toISOString()
@@ -119,75 +118,62 @@ export class MusicComposer extends BaseComposer {
   }
 
   /**
-   * 构建音乐生成的系统提示词
+   * 构建环境音生成的系统提示词
    */
-  buildMusicSystemPrompt(patternAnalysis, baseRecommendation) {
+  buildAmbientSystemPrompt(patternAnalysis, baseRecommendation) {
     const wuxing = patternAnalysis?.wuxing?.user || 'earth';
     const wuxingTone = WUXING_TONE_MAP[wuxing] || WUXING_TONE_MAP['earth'];
-    const musicMapping = WUXING_MUSIC_MAPPING[wuxing];
+    const ambientMapping = WUXING_AMBIENT_MAPPING[wuxing];
     
-    return `你是一位音乐氛围策展人。根据情绪状态推荐音乐氛围关键词。
+    return `你是一位东方哲学环境音场景策展人。根据情绪状态推荐环境声音场景（非音乐歌曲）。
+
+## 核心理念
+不推荐具体歌曲，而是推荐「环境声音场景」，如：
+- 雨夜咖啡厅
+- 竹林风声
+- 海浪低鸣
+- 山间溪流
+- 寺庙钟声
+这更契合东方哲学调性，也适合 Freesound 环境音库。
 
 ## 规则（护栏）
-1. 不推荐具体歌曲名/歌手名
-2. 输出3-5个搜索关键词
-3. 给出BPM建议范围
-4. 用一句话描述这种音乐应该带来的感觉
+1. **场景导向**：推荐一个具体的环境场景，而非音乐风格
+2. **Freesound友好**：输出的搜索词要适合 Freesound（英文，环境音关键词）
+3. **东方意境**：中文描述要有东方哲学美感
+4. **简洁有力**：场景名 ≤ 8 字，描述 ≤ 30 字
 
 ## 当前用户状态
 - 五行属性: ${wuxing} (${wuxingTone.emotion})
-- 音乐偏好: ${musicMapping?.preference || '温和稳定的音乐'}
-- 避免类型: ${musicMapping?.avoid?.join(', ') || '无'}
-- 推荐氛围: ${baseRecommendation.moodType} - ${baseRecommendation.vibe}
+- 推荐场景类型: ${baseRecommendation.sceneType} - ${baseRecommendation.sceneName}
+- 五行建议: ${ambientMapping?.preference || '稳定、接地的环境音'}
 
-## 五行音乐规则
-- 金（悲）→ 允许悲伤的音乐陪伴，不强行积极
-- 木（怒）→ 可以用节奏感强的音乐疏导
-- 火（躁）→ 用舒缓音乐帮助收敛
-- 水（恐）→ 用稳定、深沉的音乐安定
-- 土（忧）→ 用温暖、踏实的音乐支撑
-
-## 参考关键词
-${baseRecommendation.keywords.join(', ')}
+## 五行环境音规则
+- 金（悲）→ 空灵、悠远的声音（风、钟声）允许悲伤存在
+- 木（怒）→ 流动、疏通的声音（溪流、风穿林）帮助疏导
+- 火（躁）→ 清凉、沉静的声音（雨声、水波）帮助收敛
+- 水（恐）→ 厚重、稳定的声音（海浪、低频环境）给予安全感
+- 土（忧）→ 温暖、踏实的声音（壁炉、咖啡厅）提供陪伴
 
 ## 输出JSON格式（严格遵守）
 {
-  "keywords": ["关键词1", "关键词2", "关键词3", "关键词4"],
-  "bpm": "XX-XX",
-  "vibe_desc": "像XXX一样的感觉",
-  "platform_hint": "网易云/Spotify搜索建议",
-  "search_term": "网易云搜索词（如 coffee shop jazz / 治愈系轻音乐）"
+  "scene_name": "场景名（≤8字，如：雨夜书房）",
+  "freesound_query": "英文搜索词（如：rain cafe ambient loop）",
+  "display_keywords": ["中文关键词1", "中文关键词2", "中文关键词3"],
+  "vibe_desc": "一句话描述这个声音场景带来的感觉（≤30字）"
 }`;
   }
 
   /**
    * 构建用户提示词
    */
-  buildMusicUserPrompt(moodData, baseRecommendation) {
+  buildAmbientUserPrompt(moodData, baseRecommendation) {
     const emotionState = moodData?.emotion?.physical?.state || '平静';
     
     return `用户当前情绪: ${emotionState}
-推荐的音乐氛围: ${baseRecommendation.moodType} (${baseRecommendation.vibe})
+推荐的环境场景: ${baseRecommendation.sceneName} (${baseRecommendation.vibe})
+参考关键词: ${baseRecommendation.keywords.join(', ')}
 
-请生成个性化的音乐搜索关键词和氛围描述。`;
-  }
-
-  /**
-   * 生成搜索词（用于网易云跳转）
-   */
-  generateSearchTerm(keywords, baseRecommendation) {
-    // 优先用前两个关键词拼接
-    if (keywords && keywords.length >= 2) {
-      return `${keywords[0]} ${keywords[1]}`;
-    }
-    if (keywords && keywords.length === 1) {
-      return keywords[0];
-    }
-    // 回退到基础推荐的关键词
-    if (baseRecommendation.keywords && baseRecommendation.keywords.length > 0) {
-      return baseRecommendation.keywords.slice(0, 2).join(' ');
-    }
-    return '治愈音乐';
+请生成个性化的环境音场景推荐，输出 Freesound 搜索词。`;
   }
 
   /**
@@ -201,28 +187,24 @@ ${baseRecommendation.keywords.join(', ')}
     const polarity = patternAnalysis?.polarity?.type || 'mixed';
     const emotionIntensity = this.extractIntensity(moodData?.emotion);
     
-    const baseRecommendation = getMusicRecommendation({
+    const baseRecommendation = getAmbientRecommendation({
       wuxing,
       polarity,
       emotionIntensity
     });
     
-    // 生成搜索关键词
-    const keywords = generateSearchKeywords(baseRecommendation, 4);
+    // 生成 Freesound 搜索词
+    const freesoundQuery = generateFreesoundQuery(baseRecommendation);
     
     // 获取氛围描述
-    const vibeDesc = getRandomVibeDescription(baseRecommendation.moodType);
-    
-    // 生成搜索词
-    const searchTerm = this.generateSearchTerm(keywords, baseRecommendation);
+    const vibeDesc = getRandomSceneDescription(baseRecommendation.sceneType);
     
     const result = {
-      moodType: baseRecommendation.moodType,
-      keywords: keywords,
-      bpm: baseRecommendation.adjustedBpm,
+      sceneType: baseRecommendation.sceneType,
+      scene_name: baseRecommendation.sceneName,
+      keywords: baseRecommendation.keywords,
       vibe_desc: vibeDesc,
-      platform_hint: baseRecommendation.searchTips,
-      search_term: searchTerm,
+      freesound_query: freesoundQuery,
       wuxingNote: baseRecommendation.wuxingNote,
       isAI: false,
       _fallback: true,
@@ -237,8 +219,8 @@ ${baseRecommendation.keywords.join(', ')}
    * 输出验证
    */
   validateOutput(result) {
-    if (!result || !result.keywords || result.keywords.length === 0) {
-      return { valid: false, reason: 'Missing keywords' };
+    if (!result || !result.freesound_query) {
+      return { valid: false, reason: 'Missing freesound_query' };
     }
     
     if (!result.vibe_desc) {
