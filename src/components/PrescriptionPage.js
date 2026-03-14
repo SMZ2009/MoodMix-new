@@ -96,7 +96,7 @@ const PrescriptionPage = ({
         {/* ========== 今日色区域（内容自适应 + 一句话）========== */}
         <div
           className="flex flex-col items-center px-6 relative flex-shrink-0"
-          style={{ backgroundColor: todayColor.hex, paddingTop: '20px', paddingBottom: '16px' }}
+          style={{ backgroundColor: todayColor.hex, paddingTop: '16px', paddingBottom: '12px' }}
         >
           {/* 关闭按钮 */}
           <button
@@ -105,19 +105,19 @@ const PrescriptionPage = ({
                        rounded-full hover:bg-black/10 transition-colors ${iconColor}`}
             aria-label="关闭"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
 
           {/* 颜色名称（24px，宋体，居中） */}
           <h1
-            className={`text-2xl tracking-[0.15em] ${textColor}`}
+            className={`text-xl tracking-[0.15em] ${textColor}`}
             style={{ fontFamily: '"Songti SC", "STKaiti", "KaiTi", serif', fontWeight: 600 }}
           >
             {todayColor.name}
           </h1>
 
           {/* 颜色描述（14px，副标题，居中） */}
-          <span className={`text-sm mt-1.5 tracking-wider ${textColorMuted}`}>
+          <span className={`text-xs mt-1 tracking-wider ${textColorMuted}`}>
             {todayColor.desc}
           </span>
 
@@ -126,15 +126,15 @@ const PrescriptionPage = ({
             <>
               {/* 细分隔线 */}
               <div
-                className="w-8 mt-3 mb-3"
+                className="w-6 mt-2 mb-2"
                 style={{
                   height: '1px',
                   backgroundColor: textTheme === 'dark' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.2)'
                 }}
               />
-              {/* 一句话文本（16px，居中） */}
+              {/* 一句话文本 */}
               <p
-                className={`text-sm text-center leading-relaxed max-w-[260px] ${textColor}`}
+                className={`text-[13px] text-center leading-relaxed max-w-[240px] ${textColor}`}
                 style={{
                   fontFamily: '"Songti SC", "STKaiti", "KaiTi", serif',
                   opacity: 0.85
@@ -147,8 +147,8 @@ const PrescriptionPage = ({
         </div>
 
         {/* ========== 处方卡区域 ========== */}
-        <div className="px-4 py-2 flex-1 overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.98)' }}>
-          <div className="flex flex-col gap-2.5 h-full">
+        <div className="px-4 py-1.5 flex-1 overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.98)' }}>
+          <div className="flex flex-col gap-2 h-full justify-between">
             {/* 活动卡 */}
             <ActivityCard
               data={activityRecommendation}
@@ -216,16 +216,6 @@ const PrescriptionPage = ({
 
 // ========== 小仪式卡（3条仪式，纵向排列）==========
 const ActivityCard = ({ data, cardBgColor, cardBorderColor, accentColor, cardTextColor }) => {
-  // 跟踪已完成的仪式
-  const [completedRituals, setCompletedRituals] = useState({});
-
-  const toggleComplete = (index) => {
-    setCompletedRituals(prev => ({
-      ...prev,
-      [index]: !prev[index]
-    }));
-  };
-
   // 根据内容推断仪式类型和图标
   const inferRitualType = (ritual) => {
     const text = (ritual.name || ritual.title || '') + (ritual.how || ritual.content || '');
@@ -270,12 +260,12 @@ const ActivityCard = ({ data, cardBgColor, cardBorderColor, accentColor, cardTex
           backgroundColor: cardBgColor,
           borderWidth: '1px',
           borderColor: cardBorderColor,
-          minHeight: '120px'
+          minHeight: '100px'
         }}
       >
         <div className="flex items-center gap-2">
           <Sparkles size={16} style={{ color: accentColor }} />
-          <span className="text-gray-400">小仪式生成中...</span>
+          <span className="text-gray-400 text-xs">小仪式生成中...</span>
         </div>
       </div>
     );
@@ -283,18 +273,17 @@ const ActivityCard = ({ data, cardBgColor, cardBorderColor, accentColor, cardTex
 
   // 兼容数据结构：rituals数组 或 activities数组
   const rituals = data.rituals || data.activities || (data.name ? [data] : []);
-  const wuxingNote = data.wuxingNote || data.wuxing || '';
 
   return (
     <div
-      className="w-full rounded-2xl p-4 shadow-sm"
+      className="w-full rounded-2xl p-3.5 shadow-sm"
       style={{
         backgroundColor: cardBgColor,
         borderWidth: '1px',
         borderColor: cardBorderColor
       }}
     >
-      {/* 头部：图标 + 标题 */}
+      {/* 头部：标题 */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold" style={{ color: cardTextColor }}>今日小仪式</span>
@@ -302,59 +291,34 @@ const ActivityCard = ({ data, cardBgColor, cardBorderColor, accentColor, cardTex
       </div>
 
       {/* 三条小仪式 */}
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2">
         {rituals.map((ritual, index) => {
-          // 如果没有icon/typeName，自动推断
-          const inferred = inferRitualType(ritual);
-          const icon = ritual.icon || inferred.icon;
-          const typeName = ritual.typeName || inferred.typeName;
           const title = ritual.title || ritual.name || '仪式';
           const content = ritual.content || ritual.how || ritual.how_steps || '';
           const reason = ritual.reason || ritual.why_reason || ritual.why || '';
 
-          const isCompleted = completedRituals[index];
-
           return (
             <div
               key={index}
-              className="rounded-lg p-2.5 flex items-start gap-2"
-              style={{ backgroundColor: 'rgba(255,255,255,0.5)' }}
+              className="rounded-lg p-2.5 flex flex-col"
+              style={{ backgroundColor: 'rgba(255,255,255,0.45)' }}
             >
-              {/* 内容 */}
-              <div className="flex-1 min-w-0">
-                <h4
-                  className={`font-bold text-sm leading-tight ${isCompleted ? 'text-gray-400 line-through' : 'text-gray-800'}`}
-                  style={{ fontFamily: '"Songti SC", "STKaiti", "KaiTi", serif' }}
-                >
-                  {title}
-                </h4>
-                {content && (
-                  <p className={`text-[11px] mt-0.5 leading-snug ${isCompleted ? 'text-gray-300' : 'text-gray-600'}`}>
-                    {content}
-                  </p>
-                )}
-                {reason && (
-                  <p className={`text-[10px] mt-1 leading-snug italic ${isCompleted ? 'text-gray-300' : 'text-gray-400'}`}>
-                    {reason}
-                  </p>
-                )}
-              </div>
-
-              {/* 右侧完成按钮 */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleComplete(index);
-                }}
-                className="flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all mt-0.5"
-                style={{
-                  borderColor: isCompleted ? cardTextColor : cardBorderColor,
-                  backgroundColor: isCompleted ? cardTextColor : 'transparent'
-                }}
-                aria-label={isCompleted ? '标记为未完成' : '标记为已完成'}
+              <h4
+                className="font-bold text-sm leading-tight text-gray-800"
+                style={{ fontFamily: '"Songti SC", "STKaiti", "KaiTi", serif' }}
               >
-                {isCompleted && <Check size={14} className="text-white" strokeWidth={3} />}
-              </button>
+                {title}
+              </h4>
+              {content && (
+                <p className="text-[11px] mt-0.5 leading-snug text-gray-600">
+                  {content}
+                </p>
+              )}
+              {reason && (
+                <p className="text-[10px] mt-1 leading-snug italic text-gray-400">
+                  {reason}
+                </p>
+              )}
             </div>
           );
         })}
