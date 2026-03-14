@@ -1125,98 +1125,74 @@ const DrinkDetailSection = ({ drink, checkedIngredients, onToggleIngredient, onB
 
   return (
     <div className="fixed inset-0 z-50 bg-[#F7F6F2] h-screen overflow-y-auto pb-32">
-      {/* 顶部浸入式图片区域 */}
-      <div className="relative h-[42vh] w-full overflow-hidden ink-wash-mask">
-        <img
-          src={drink.image}
-          className="w-full h-full object-cover transition-transform duration-[2s] hover:scale-110"
-          alt={drink.name}
-        />
-        {/* 图片底部水墨融合渐变 */}
-        <div className="drink-hero-mask-layer" />
-
-        {/* 悬浮操作按钮 */}
-        <div className="absolute top-[calc(env(safe-area-inset-top,0px)+1rem)] inset-x-0 px-6 flex justify-between z-20">
+      {/* 顶部导航栏 */}
+      <div className="sticky top-0 z-20 px-4 pt-[calc(env(safe-area-inset-top,0px)+1rem)] pb-3 bg-[#F7F6F2]/95 backdrop-blur-md">
+        <div className="flex justify-between items-center max-w-4xl mx-auto">
           <button
             type="button"
             onClick={onBack}
             aria-label="返回"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'rgba(255,255,255,0.15)',
-              backdropFilter: 'blur(12px)',
-              WebkitBackdropFilter: 'blur(12px)',
-              border: '1px solid rgba(255,255,255,0.2)',
-              color: 'white',
-              width: '42px',
-              height: '42px',
-              borderRadius: '999px',
-              boxShadow: '0 4px 18px rgba(0,0,0,0.12)',
-              cursor: 'pointer'
-            }}
+            className="p-2.5 rounded-full bg-white/80 backdrop-blur-lg shadow-md hover:bg-white transition-all"
           >
-            <ChevronLeft size={22} strokeWidth={2.2} color="#ffffff" />
+            <ChevronLeft size={22} strokeWidth={2.2} className="text-gray-700" />
           </button>
           <button
             type="button"
             onClick={() => onHelp && onHelp(drink)}
             aria-label="饮品帮助"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'rgba(255,255,255,0.15)',
-              backdropFilter: 'blur(12px)',
-              WebkitBackdropFilter: 'blur(12px)',
-              border: '1px solid rgba(255,255,255,0.2)',
-              color: 'white',
-              width: '42px',
-              height: '42px',
-              borderRadius: '999px',
-              boxShadow: '0 4px 18px rgba(0,0,0,0.12)',
-              cursor: 'pointer'
-            }}
+            className="p-2.5 rounded-full bg-white/80 backdrop-blur-lg shadow-md hover:bg-white transition-all"
           >
-            <HelpCircle size={21} strokeWidth={2.2} color="#ffffff" />
+            <HelpCircle size={21} strokeWidth={2.2} className="text-gray-700" />
           </button>
         </div>
       </div>
 
-      {/* 极简详情内容容器 */}
-      <div className="relative -mt-16 detail-glass-container px-7 pt-9 pb-12 max-w-2xl mx-auto">
-        {/* 标题标题区域 */}
-        <div className="mb-9">
-          <div className="flex flex-wrap items-baseline gap-3 mb-4">
-            <h1 className="text-[2.25rem] oriental-title-large">
-              {drink.name_cn || translateDrinkName(drink.name) || drink.name}
-            </h1>
-            {drink.nameEn && drink.nameEn !== drink.name && (
-              <span className="text-[14px] text-gray-400 font-serif italic tracking-wider opacity-60">
-                / {drink.nameEn}
-              </span>
-            )}
-          </div>
+      {/* 详情内容容器 */}
+      <div className="px-4 pt-4 pb-12 max-w-4xl mx-auto">
+        {/* 标题和图片区域 */}
+        <div className="flex gap-4 mb-8 items-start">
+          {/* 标题标题区域 */}
+          <div className="flex-1">
+            <div className="flex flex-wrap items-baseline gap-3 mb-3">
+              <h1 className="text-[2.25rem] oriental-title-large">
+                {drink.name_cn || translateDrinkName(drink.name) || drink.name}
+              </h1>
+              {drink.nameEn && drink.nameEn !== drink.name && (
+                <span className="text-[14px] text-gray-400 font-serif italic tracking-wider opacity-60">
+                  / {drink.nameEn}
+                </span>
+              )}
+            </div>
 
-          <div className="flex flex-wrap gap-2.5">
-            {drink.abv > 0 && (
-              <div
-                className="px-3.5 py-1.5 rounded-full flex items-center gap-1.5"
-                style={{ background: 'rgba(59, 130, 246, 0.08)', border: '0.5px solid rgba(59, 130, 246, 0.15)' }}
-              >
-                <Martini size={14} className="text-blue-500/80" />
-                <span className="text-[11px] font-bold text-blue-600/90 tracking-widest">ABV {drink.abv}%</span>
-              </div>
-            )}
-            {drink.tags?.map((tag, idx) => (
-              <span
-                key={idx}
-                className="px-3.5 py-1.5 bg-gray-50/80 rounded-full text-[11px] font-bold text-gray-500/80 tracking-widest border border-gray-100"
-              >
-                {tag}
-              </span>
-            ))}
+            <div className="flex flex-wrap gap-2.5">
+              {drink.abv > 0 && (
+                <div
+                  className="px-3.5 py-1.5 rounded-full flex items-center gap-1.5"
+                  style={{ background: 'rgba(59, 130, 246, 0.08)', border: '0.5px solid rgba(59, 130, 246, 0.15)' }}
+                >
+                  <Martini size={14} className="text-blue-500/80" />
+                  <span className="text-[11px] font-bold text-blue-600/90 tracking-widest">ABV {drink.abv}%</span>
+                </div>
+              )}
+              {drink.tags?.map((tag, idx) => (
+                <span
+                  key={idx}
+                  className="px-3.5 py-1.5 bg-gray-50/80 rounded-full text-[11px] font-bold text-gray-500/80 tracking-widest border border-gray-100"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+          
+          {/* 右侧小图 */}
+          <div className="w-28 flex-shrink-0 bg-cover bg-center rounded-2xl overflow-hidden shadow-lg" 
+               style={{ backgroundImage: `url(${drink.image})`, aspectRatio: '4/5' }}>
+            <img
+              src={drink.image}
+              className="w-full h-full object-cover transition-transform duration-[2s] hover:scale-110"
+              alt={drink.name}
+            />
           </div>
         </div>
 
