@@ -79,7 +79,6 @@ export class ActivityComposer extends BaseComposer {
 
         const result = {
           rituals: rituals,
-          wuxingNote: this.getWuxingNote(conditions.wuxing),
           wuxing: conditions.wuxing,
           tone: this.determineTone(patternAnalysis),
           isAI: true,
@@ -174,7 +173,7 @@ export class ActivityComposer extends BaseComposer {
 2. typeName: 类型中文名（气味/进食/方位/供物/时机/速效/禁忌）
 3. title: 仪式名称（简洁有力，不超过6字，如"东方寻木"、"一盏温热"）
 4. content: 具体做法（不超过15字）
-5. reason: 简短说明（不超过15字，不要包含"土·稳定"等字样）
+5. reason: 简短说明（不超过15字，不要包含“土·稳定”、“五行”、“磁场”、“气场”等玄学或术语字样，直接写心理或感官的慰藉，如“让思绪慢下来”或“缓解肌肉紧张”）
 
 ## 输出json格式（严格遵守）
 {
@@ -231,12 +230,21 @@ export class ActivityComposer extends BaseComposer {
     // 从知识库中动态筛选 3 个活动作为降级
     const candidates = filterActivities(conditions);
 
+    // 为不同五行分配更自然的理由
+    const reasonMap = {
+      wood: '舒缓紧绷的情绪，让能量顺畅流动',
+      fire: '平复焦躁的内心，寻找片刻宁静',
+      earth: '沉淀繁杂的思绪，建立内在的安全感',
+      metal: '温存每一个瞬间，允许感性流淌',
+      water: '接纳起伏的状态，顺应内心的直觉'
+    };
+
     const rituals = candidates.map(c => ({
       icon: c.icon || '✨',
       typeName: c.category || '行为',
       title: c.name,
       content: c.desc || '',
-      reason: `${this.getWuxingNote(wuxing)}，以此调和气场。`
+      reason: c.reason || reasonMap[wuxing] || '温和调节此刻状态'
     }));
 
     // 如果筛选不足3个，补齐
@@ -244,15 +252,14 @@ export class ActivityComposer extends BaseComposer {
       rituals.push({
         icon: '✨',
         typeName: '速效',
-        title: '深呼吸三次',
-        content: '感受气息的流动',
-        reason: '以静制动，平衡万物。'
+        title: '深呼吸',
+        content: '感受气息流动',
+        reason: '以静制动，平衡呼吸'
       });
     }
 
     const result = {
       rituals: rituals,
-      wuxingNote: this.getWuxingNote(wuxing),
       wuxing: wuxing,
       tone: this.determineTone(patternAnalysis),
       isAI: false,
@@ -290,20 +297,6 @@ export class ActivityComposer extends BaseComposer {
     if (/时|点|早|晚|午|傍晚/.test(text)) return '时机';
     if (/不要|避免|忌|少|别/.test(text)) return '禁忌';
     return '速效';
-  }
-
-  /**
-   * 获取五行注释
-   */
-  getWuxingNote(wuxing) {
-    const notes = {
-      wood: '木·疏泄',
-      fire: '火·收敛',
-      earth: '土·稳定',
-      metal: '金·对冲',
-      water: '水·安定'
-    };
-    return notes[wuxing] || '土·稳定';
   }
 
   /**
