@@ -1,11 +1,16 @@
 /**
- * ActivityComposer - 活动推荐生成器
+ * ActivityComposer - 小仪式推荐生成器
  * 
- * 职责：根据情绪状态推荐三条活动，按难度/强度递进
+ * 职责：根据情绪状态推荐三条小仪式，覆盖身/空间/行为三类
  * 模型：Qwen3-8B（结构化短句）
  * 
  * 输入：五行属性 + 极性 + 情绪强度 + 躯体张力 + 认知负荷 + 社交倾向
- * 输出：{ activities: [{title, reason, how}, ...], wuxingNote }
+ * 输出：{ rituals: [{icon, typeName, title, content, reason}, ...], wuxingNote }
+ * 
+ * 仪式类型（7种）:
+ * - 身体类: 气味(scent), 进食(food)
+ * - 空间类: 方位(direction), 供物(offering)
+ * - 行为类: 时机(timing), 速效(quickFix), 禁忌(taboo)
  */
 
 import { BaseComposer, WUXING_TONE_MAP } from './BaseComposer';
@@ -63,17 +68,21 @@ export class ActivityComposer extends BaseComposer {
       });
       
       const parsed = this.parseJSONOutput(llmResult);
-      if (parsed && parsed.activities && parsed.activities.length > 0) {
-        const activities = parsed.activities.slice(0, 3).map((act, index) => ({
-          title: act.title || act.name || `活动${index + 1}`,
-          reason: act.reason || act.why_reason || '',
-          how: act.how || act.how_steps || ''
+      // 支持新格式 rituals 和旧格式 activities
+      const rawRituals = parsed?.rituals || parsed?.activities;
+      if (rawRituals && rawRituals.length > 0) {
+        const rituals = rawRituals.slice(0, 3).map((r, index) => ({
+          icon: r.icon || this.inferIcon(r),
+          typeName: r.typeName || this.inferTypeName(r),
+          title: r.title || r.name || `仪式${index + 1}`,
+          content: r.content || r.how || r.how_steps || '',
+          reason: r.reason || r.why_reason || ''
         }));
         
-        this.log('SUCCESS', `LLM生成${activities.length}条活动`);
+        this.log('SUCCESS', `LLM生成${rituals.length}条小仪式`);
         
         const result = {
-          activities: activities,
+          rituals: rituals,
           wuxingNote: this.getWuxingNote(conditions.wuxing),
           wuxing: conditions.wuxing,
           tone: this.determineTone(patternAnalysis),
@@ -127,17 +136,13 @@ export class ActivityComposer extends BaseComposer {
     return 0.5;
   }
 
-  /**
-   * 构建活动生成的系统提示词
+   /**
+   * 构建小仪式生成的系统提示词
    */
   buildActivitySystemPrompt(patternAnalysis, conditions) {
     const wuxing = conditions.wuxing;
     const wuxingTone = WUXING_TONE_MAP[wuxing] || WUXING_TONE_MAP['earth'];
     const polarity = conditions.polarity;
-    
-    // 获取五行优先的活动类型
-    const priorityTypes = WUXING_ACTIVITY_PRIORITY[wuxing] || ['quietReflection'];
-    const priorityCategories = priorityTypes.map(type => ACTIVITY_CATEGORIES[type]?.name).filter(Boolean);
     
     // 五行对冲理论
     const wuxingTheory = {
@@ -148,41 +153,43 @@ export class ActivityComposer extends BaseComposer {
       water: '水主恐，需要土来克之，或火来温之'
     };
     
-    return `你是一位生活方式教练。根据用户的情绪状态推荐三条活动，按难度/强度递进排列。
+    return `你是一位运势指导师。根据用户的五行状态推荐三条"小仪式"，像开运指南一样给出具体可执行的行动。
 
-## 匹配规则（护栏）
-1. 躯体张力 > 0.7 → 优先躯体释放型活动
-2. 认知负荷 > 0.7 → 优先感官沉浸型活动
-3. 情绪强度 > 0.8 且 极性=阴 → 优先静默内观型
-4. 社交倾向 > 0.6 → 可推荐人际连接型
-5. 诉求方向=宣泄 → 优先创造表达型
+## 仪式类型（必须从以下7种中选择3种不同类型）
+- 身体类:
+  - 气味(scent): 闻某种香味，如檀香、咖啡、柑橘 → icon: 🌿
+  - 进食(food): 吃/喝某种食物，如热茶、甜食、温汤 → icon: 🍵
+- 空间类:
+  - 方位(direction): 面朝某个方向，如朝东站立、面向窗户 → icon: 🧭
+  - 供物(offering): 摆放某物，如鲜花、绿植、水晶 → icon: 🪴
+- 行为类:
+  - 时机(timing): 在特定时间做某事，如午后散步、日落前 → icon: ⏰
+  - 速效(quickFix): 立刻可做的小动作，如深呼吸、整理桌面 → icon: ✨
+  - 禁忌(taboo): 今日不宜做的事，如避免争吵、少刷手机 → icon: 🚫
 
 ## 当前用户状态
 - 五行属性: ${wuxing} (${wuxingTone.emotion})
 - 极性: ${polarity}
 - 五行理论: ${wuxingTheory[wuxing] || ''}
-- 优先活动类型: ${priorityCategories.join(', ')}
 
-## 三条活动要求
-1. 第一条：最简单的，即刻能做（如走动、呼吸）
-2. 第二条：中等强度，需要一点准备（如整理、写字）
-3. 第三条：稍微突破舒适区（如联系人、外出）
+## 三条仪式要求
+1. 三条仪式必须来自不同类型（如一条进食+一条方位+一条速效）
+2. 内容要具体、可执行、有仪式感
+3. reason要用五行理论解释，像算命先生的口吻
 
-## 每条活动必须包含
-1. title: 活动名称（如"去楼下走二十分钟"）
-2. reason: 五行依据（如"金气内收，木能疏之，脚踩地面有接地效果"，不超过20字）
-3. how: 具体怎么做（如"不带耳机，感受脚步节奏"，不超过20字）
-
-## 输出要求
-- reason要有趣，不是"建议你运动"，而是"金气内收，木能疏之"这种有解释框架的表达
-- 语气自然，像朋友聊天而非专家建议
+## 每条仪式必须包含
+1. icon: 对应类型的emoji（🌿/🍵/🧭/🪴/⏰/✨/🚫）
+2. typeName: 类型中文名（气味/进食/方位/供物/时机/速效/禁忌）
+3. title: 仪式名称（如"喝一杯温热的东西"）
+4. content: 具体做法（如"热茶、热粥、热汤，慢慢享用"，不超过20字）
+5. reason: 五行依据（如"土主运化，温热能给予包裹感"，不超过20字）
 
 ## 输出json格式（严格遵守）
 {
-  "activities": [
-    { "title": "活动名称", "reason": "五行依据", "how": "具体怎么做" },
-    { "title": "活动名称", "reason": "五行依据", "how": "具体怎么做" },
-    { "title": "活动名称", "reason": "五行依据", "how": "具体怎么做" }
+  "rituals": [
+    { "icon": "🍵", "typeName": "进食", "title": "仪式名称", "content": "具体做法", "reason": "五行依据" },
+    { "icon": "🧭", "typeName": "方位", "title": "仪式名称", "content": "具体做法", "reason": "五行依据" },
+    { "icon": "✨", "typeName": "速效", "title": "仪式名称", "content": "具体做法", "reason": "五行依据" }
   ]
 }`;
   }
@@ -193,16 +200,10 @@ export class ActivityComposer extends BaseComposer {
   buildActivityUserPrompt(candidates, moodData) {
     const emotionState = moodData?.emotion?.physical?.state || '平静';
     
-    const candidateList = candidates.slice(0, 8).map(a => 
-      `- ${a.name} (${a.category})`
-    ).join('\n');
-    
     return `用户当前情绪: ${emotionState}
 
-可参考的活动类型:
-${candidateList}
-
-请根据五行理论生成三条活动推荐，每条包含 title、reason、how。`;
+请根据五行理论生成三条小仪式，必须从7种类型中选择3种不同类型。
+每条必须包含: icon, typeName, title, content, reason。`;
   }
 
   /**
@@ -221,22 +222,21 @@ ${candidateList}
   }
 
   /**
-   * 本地降级：基于规则生成三条活动
+   * 本地降级：基于规则生成三条小仪式
    */
   async localFallback(context) {
     const patternAnalysis = context.getIntermediate('patternAnalysis');
     const moodData = context.getIntermediate('moodData');
     
     const conditions = this.extractConditions(patternAnalysis, moodData);
-    const candidates = filterActivities(conditions);
     const wuxing = conditions.wuxing;
     const tone = this.determineTone(patternAnalysis);
     
-    // 生成三条活动，按难度递进
-    const activities = this.generateThreeActivities(wuxing, candidates, tone);
+    // 生成三条小仪式
+    const rituals = this.generateThreeRituals(wuxing, tone);
     
     const result = {
-      activities: activities,
+      rituals: rituals,
       wuxingNote: this.getWuxingNote(wuxing),
       wuxing: wuxing,
       tone: tone,
@@ -250,100 +250,158 @@ ${candidateList}
   }
 
   /**
-   * 生成三条活动（本地模板）
+   * 生成三条小仪式（本地模板）
    */
-  generateThreeActivities(wuxing, candidates, tone) {
-    // 五行对应的三条活动模板
-    const activityTemplates = {
+  generateThreeRituals(wuxing, tone) {
+    // 五行对应的三条仪式模板（每个五行对应不同类型组合）
+    const ritualTemplates = {
       wood: [
         {
-          title: '去楼下走二十分钟',
-          reason: '木气郁结，需要向外疏泄',
-          how: '不带耳机，感受脚步节奏'
+          icon: '🌿',
+          typeName: '气味',
+          title: '闻一闻柑橘的香气',
+          content: '柠檬、橙子、柚子，清新的味道',
+          reason: '木气郁结，柑橘之香能疏肝理气'
         },
         {
-          title: '整理一个抽屉或桌面',
-          reason: '木主生发，整理是疑椝气的方式',
-          how: '只整理一个区域，不要贪多'
+          icon: '🧭',
+          typeName: '方位',
+          title: '面朝东方站立片刻',
+          content: '朝向日出的方向，感受生发之气',
+          reason: '木主东方，面东能接引生机'
         },
         {
-          title: '给一个久未联系的人发一条消息',
-          reason: '木主亲，连接是疏泄木气的出口',
-          how: '一句话就够，不用解释为什么突然联系'
+          icon: '✨',
+          typeName: '速效',
+          title: '伸个大大的懒腰',
+          content: '双手向上，尽力舒展全身',
+          reason: '木主筋，舒展能疏通气血'
         }
       ],
       fire: [
         {
-          title: '做三轮深呼吸',
-          reason: '火气过旺，需要向内收敛',
-          how: '4秒吸气—7秒屏息—8秒呼出'
+          icon: '🍵',
+          typeName: '进食',
+          title: '喝一杯温凉的水',
+          content: '常温或微凉，小口慢饮',
+          reason: '水克火，凉水能帮助平心静气'
         },
         {
-          title: '用冷水洗把脸',
-          reason: '水克火，冷水能帮助降火',
-          how: '感受冷水在脸上的触感，停甙9秒'
+          icon: '🪴',
+          typeName: '供物',
+          title: '在桌上摆一杯清水',
+          content: '透明玻璃杯，清澈的水',
+          reason: '水能济火，清水带来澄净之感'
         },
         {
-          title: '到空旷的地方站一会儿',
-          reason: '火需要空间燃烧，扩散能释放',
-          how: '屋顶、阳台、空旷地，站甹5分钟'
+          icon: '🚫',
+          typeName: '禁忌',
+          title: '今日少争论',
+          content: '遇事缓一缓，不急于表态',
+          reason: '火旺易冲动，静默是最好的灭火'
         }
       ],
       earth: [
         {
-          title: '吃一样温热的东西',
-          reason: '土主辐化，温热能给予包裹感',
-          how: '一杯热水、热籼、热汤，慢慢吃'
+          icon: '🍵',
+          typeName: '进食',
+          title: '喝一杯温热的东西',
+          content: '热茶、热粥、热汤，慢慢享用',
+          reason: '土主运化，温热能给予包裹感'
         },
         {
-          title: '摸摸柔软的东西',
-          reason: '土主持载，触感能帮助落地',
-          how: '抱枕、毛毯、宠物，感受柔软'
+          icon: '🧭',
+          typeName: '方位',
+          title: '坐在房间的中央位置',
+          content: '找到空间的中心点，安坐片刻',
+          reason: '土居中央，中位能带来稳定感'
         },
         {
+          icon: '✨',
+          typeName: '速效',
           title: '整理一下明天的计划',
-          reason: '土主稳定，计划能带来确定感',
-          how: '写下三件事，不需要完美'
+          content: '写下三件事，不需要完美',
+          reason: '土主稳定，计划能带来确定感'
         }
       ],
       metal: [
         {
-          title: '去楼下走二十分钟',
-          reason: '金气内收，木能疏之，脚踩地面有接地效果',
-          how: '不带耳机，感受脚步节奏'
+          icon: '🌿',
+          typeName: '气味',
+          title: '闻一闻薄荷或桉树香',
+          content: '清凉通透的味道，深吸几口',
+          reason: '金主收敛，清香能宣通肺气'
         },
         {
-          title: '整理一个抽屉或桌面',
-          reason: '金主收敛，整理是顺势而为的出口',
-          how: '只整理一个区域，不要贪多'
+          icon: '⏰',
+          typeName: '时机',
+          title: '傍晚时分出门走走',
+          content: '日落前后，感受金气最盛的时刻',
+          reason: '金主西方，傍晚是金气归藏之时'
         },
         {
-          title: '给一个久未联系的人发一条消息',
-          reason: '悲郁易使人退缩，主动连接是反向破局',
-          how: '一句话就够，不用解释为什么突然联系'
+          icon: '✨',
+          typeName: '速效',
+          title: '整理一个小区域',
+          content: '抽屉、桌角，只整理一处',
+          reason: '金主收敛，整理是顺势而为'
         }
       ],
       water: [
         {
-          title: '找个温暖的角落缩一会儿',
-          reason: '水主恐，温暖能带来安全感',
-          how: '裹上毯子，让自己小小的'
+          icon: '🍵',
+          typeName: '进食',
+          title: '喝一杯热的黑色饮品',
+          content: '黑咖啡、普洱茶、黑芝麻糊',
+          reason: '水主黑色，温热能驱散寒意'
         },
         {
-          title: '泡个脚或泡个澡',
-          reason: '水性亲水，泡澡能帮助安定',
-          how: '水温稍热，15-20分钟'
+          icon: '🪴',
+          typeName: '供物',
+          title: '点一支蜡烛',
+          content: '小小的火光，安静地燃烧',
+          reason: '火能温水，烛光带来温暖安定'
         },
         {
-          title: '写下此刻心里的东西',
-          reason: '水主蔘，书写能帮助释放',
-          how: '打开备忘录，写完可以删掉'
+          icon: '🚫',
+          typeName: '禁忌',
+          title: '今日少独处太久',
+          content: '适当找人说说话，哪怕只是闲聊',
+          reason: '水主藏，过度独处易生寒意'
         }
       ]
     };
     
     // 默认使用土的模板
-    return activityTemplates[wuxing] || activityTemplates.earth;
+    return ritualTemplates[wuxing] || ritualTemplates.earth;
+  }
+
+  /**
+   * 推断仪式图标（当LLM没返回时）
+   */
+  inferIcon(ritual) {
+    const text = (ritual.title || '') + (ritual.content || ritual.how || '');
+    if (/闻|香|气味|精油|檀|薰/.test(text)) return '🌿';
+    if (/吃|喝|茶|咖啡|水|热|温|粥|汤|食/.test(text)) return '🍵';
+    if (/方位|方向|朝|东|南|西|北|面向/.test(text)) return '🧭';
+    if (/摆|放|供|物|花|植|绿|蜡烛/.test(text)) return '🪴';
+    if (/时|点|早|晚|午|傍晚/.test(text)) return '⏰';
+    if (/不要|避免|忌|少|别/.test(text)) return '🚫';
+    return '✨';
+  }
+
+  /**
+   * 推断仪式类型名（当LLM没返回时）
+   */
+  inferTypeName(ritual) {
+    const text = (ritual.title || '') + (ritual.content || ritual.how || '');
+    if (/闻|香|气味|精油|檀|薰/.test(text)) return '气味';
+    if (/吃|喝|茶|咖啡|水|热|温|粥|汤|食/.test(text)) return '进食';
+    if (/方位|方向|朝|东|南|西|北|面向/.test(text)) return '方位';
+    if (/摆|放|供|物|花|植|绿|蜡烛/.test(text)) return '供物';
+    if (/时|点|早|晚|午|傍晚/.test(text)) return '时机';
+    if (/不要|避免|忌|少|别/.test(text)) return '禁忌';
+    return '速效';
   }
 
   /**
@@ -364,8 +422,10 @@ ${candidateList}
    * 输出验证
    */
   validateOutput(result) {
-    if (!result || !result.activities || result.activities.length === 0) {
-      return { valid: false, reason: 'Missing activities array' };
+    // 支持新格式 rituals 和旧格式 activities
+    const items = result?.rituals || result?.activities;
+    if (!result || !items || items.length === 0) {
+      return { valid: false, reason: 'Missing rituals array' };
     }
     
     return { valid: true };
