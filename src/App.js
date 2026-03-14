@@ -182,12 +182,7 @@ const MoodInputSection = ({
       <div className="absolute bottom-1/3 left-0 w-72 h-72 bg-pink-200/40 rounded-full blur-[100px] pointer-events-none mix-blend-multiply"></div>
       <div className="text-center mb-4 sm:mb-6 z-10">
         <h2 className="text-2xl xs:text-[24px] sm:text-[28px] font-extrabold text-gray-800 mb-2 sm:mb-3 tracking-wide mx-auto text-center" style={{ fontFamily: '"Songti SC", "STKaiti", "KaiTi", serif' }}>此刻，心境如何？</h2>
-        <p
-          className="text-gray-500 text-xs sm:text-sm font-light tracking-wider mx-auto text-center italic"
-          style={{ fontFamily: '"FZYouSong", "方正悠宋", serif' }}
-        >
-          万般心绪，皆可入杯
-        </p>
+
       </div>
       <div className="w-full max-w-[21rem] sm:max-w-[23rem] relative mb-4 sm:mb-6 z-10 group">
         <div className="absolute inset-0 bg-white/10 backdrop-blur-[28px] sm:backdrop-blur-[34px] rounded-xl sm:rounded-2xl group-focus-within:bg-white/15 group-focus-within:scale-[1.02] transition-all duration-500" style={{ boxShadow: 'rgba(255, 255, 255, 0.22) 0px 10px 34px, rgba(154, 169, 186, 0.12) 0px 20px 44px' }}></div>

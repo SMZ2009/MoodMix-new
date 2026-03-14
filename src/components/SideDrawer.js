@@ -101,12 +101,7 @@ const SideDrawer = ({
         {/* 底部装饰 */}
         <div className="absolute bottom-0 left-0 right-0 p-6 pb-safe">
           <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent mb-4" />
-          <p 
-            className="text-center text-xs text-gray-400"
-            style={{ fontFamily: '"Songti SC", "STKaiti", "KaiTi", serif' }}
-          >
-            万般心绪，皆可入杯
-          </p>
+
         </div>
       </div>
     </>

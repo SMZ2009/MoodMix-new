@@ -17,12 +17,7 @@ const HomePage = ({ isMixing = false }) => {
         >
           此刻，心境如何？
         </h1>
-        <p
-          className="text-gray-500 text-sm sm:text-base font-light tracking-wider italic"
-          style={{ fontFamily: '"FZYouSong", "方正悠宋", serif' }}
-        >
-          万般心绪，皆可入杯
-        </p>
+
       </div>
 
       {/* 水墨杯图 - 居中展示 */}
