@@ -1064,9 +1064,27 @@ const ExploreSection = ({
 
         {/* 空状态 */}
         {!apiLoading && !apiError && apiDrinks.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-56 sm:h-64 text-gray-400 opacity-60">
-            <Search size={48} className="mb-4" />
-            <p className="text-sm">未找到相关饮品，换个词试试？</p>
+          <div className="flex flex-col items-center justify-center h-56 sm:h-64 text-gray-400">
+            <div className="relative mb-6">
+              <div className="absolute inset-0 bg-gradient-to-r from-amber-200 to-orange-200 rounded-full blur-xl opacity-40 animate-pulse"></div>
+              <div className="relative bg-gradient-to-br from-amber-50 to-orange-50 rounded-full p-6 shadow-lg">
+                <Search size={48} className="text-amber-400" />
+              </div>
+            </div>
+            <p className="text-sm font-medium text-gray-600 mb-3">未找到相关饮品</p>
+            <p className="text-xs text-gray-500 mb-4">换个词试试？或者试试这些热门搜索</p>
+            
+            <div className="flex flex-wrap gap-2 justify-center max-w-xs">
+              {['鸡尾酒', '咖啡', '果汁', '啤酒', '鸡尾酒', '咖啡'].slice(0, 4).map((suggestion, index) => (
+                <button
+                  key={index}
+                  onClick={() => setSearchQuery(suggestion)}
+                  className="px-3 py-1.5 bg-white/60 backdrop-blur-sm rounded-full text-xs text-gray-600 border border-gray-200/50 hover:bg-amber-50 hover:border-amber-200/50 hover:text-amber-600 transition-all duration-200"
+                >
+                  {suggestion}
+                </button>
+              ))}
+            </div>
           </div>
         )}
       </div>
