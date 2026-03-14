@@ -41,8 +41,8 @@ const SideDrawer = ({
         aria-modal="true"
         aria-label="导航菜单"
       >
-        {/* 顶部安全区 + 关闭按钮 */}
-        <div className="flex items-center justify-between px-5 pt-[calc(env(safe-area-inset-top,0px)+1rem)] pb-4">
+        {/* 顶部安全区 */}
+        <div className="px-5 pt-[calc(env(safe-area-inset-top,0px)+1rem)] pb-4">
           <div>
             <h1 
               className="text-xl font-bold text-gray-800"
@@ -52,13 +52,6 @@ const SideDrawer = ({
             </h1>
             <p className="text-xs text-gray-500 mt-0.5">情绪处方</p>
           </div>
-          <button 
-            onClick={onClose}
-            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-            aria-label="关闭菜单"
-          >
-            <X size={20} className="text-gray-500" />
-          </button>
         </div>
 
         {/* 分隔线 */}
