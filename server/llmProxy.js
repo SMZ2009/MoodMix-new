@@ -261,7 +261,7 @@ app.get('/api/music/search', async (req, res) => {
       res.json({ success: true, count: mockResults.length, results: mockResults });
       
     } else if (platform === 'yyfang') {
-      // 使用 yyfang.top 音源
+      // 使用 yyfang.top 音源 - 限制3个结果
       try {
         const currentFetch = await getFetch();
         if (!currentFetch) {
@@ -271,6 +271,7 @@ app.get('/api/music/search', async (req, res) => {
         console.log(`[YYFang] Searching: ${query}`);
         
         let results = [];
+        const limit = 3; // 限制只返回3个结果
         
         // 尝试使用 yyfang.top 的 API
         try {
@@ -284,7 +285,6 @@ app.get('/api/music/search', async (req, res) => {
           });
           
           if (searchRes.ok) {
-            const contentType = searchRes.headers.get('content-type');
             const text = await searchRes.text();
             
             // 尝试解析 JSON
@@ -292,20 +292,15 @@ app.get('/api/music/search', async (req, res) => {
             try {
               searchData = JSON.parse(text);
             } catch (e) {
-              // 如果不是 JSON，可能是 HTML，尝试从 HTML 中提取数据
-              console.log('[YYFang] Response is not JSON, trying to extract from HTML');
-              // 尝试提取 script 标签中的数据
-              const scriptMatch = text.match(/window\.__INITIAL_STATE__\s*=\s*({.+?});/);
-              if (scriptMatch) {
-                searchData = JSON.parse(scriptMatch[1]);
-              }
+              // 如果不是 JSON，可能是 HTML
+              console.log('[YYFang] Response is not JSON');
             }
             
             if (searchData) {
               // 根据 yyfang.top 的实际数据结构解析
               const songs = searchData.data?.list || searchData.result || searchData.songs || searchData;
               if (Array.isArray(songs)) {
-                results = songs.slice(0, page_size).map((song, index) => ({
+                results = songs.slice(0, limit).map((song, index) => ({
                   id: song.id || song.songid || `yy${String(index + 1).padStart(3, '0')}`,
                   name: song.name || song.title || song.songname || '未知歌曲',
                   artist: song.artist || song.singer || song.author || '未知歌手',
@@ -313,7 +308,7 @@ app.get('/api/music/search', async (req, res) => {
                   duration: song.duration || song.interval || 0,
                   previewUrl: song.url || song.play_url || song.mp3 || song.src,
                   coverUrl: song.cover || song.pic || song.img || song.coverUrl
-                })).filter(song => song.previewUrl); // 只保留有播放链接的歌曲
+                })).filter(song => song.previewUrl);
               }
             }
           }
@@ -321,25 +316,24 @@ app.get('/api/music/search', async (req, res) => {
           console.log('[YYFang] API failed:', e.message);
         }
         
-        // 如果 yyfang.top API 失败，尝试使用其他音源API但标记为yyfang
+        // 如果 yyfang.top API 失败，使用 meting-api 获取真实音乐数据
         if (results.length === 0) {
           try {
-            // 使用备选API获取真实音乐数据
-            const backupUrl = `https://music-api.gdstudio.xyz/api.php?types=search&count=${page_size}&source=netease&pages=1&name=${encodeURIComponent(query)}`;
-            const backupRes = await currentFetch(backupUrl, {
+            // 使用 meting-api 获取真实音乐数据 - 只获取3个
+            const searchUrl = `https://api.meting.cf/netease/search?keyword=${encodeURIComponent(query)}&limit=${limit}`;
+            const searchRes = await currentFetch(searchUrl, {
               headers: { 'Accept': 'application/json' }
             });
             
-            if (backupRes.ok) {
-              const backupData = await backupRes.json();
-              if (Array.isArray(backupData)) {
-                for (const song of backupData.slice(0, page_size)) {
+            if (searchRes.ok) {
+              const searchData = await searchRes.json();
+              if (Array.isArray(searchData) && searchData.length > 0) {
+                // 获取每个歌曲的播放URL
+                for (const song of searchData.slice(0, limit)) {
                   try {
-                    // 获取播放URL
-                    const urlRes = await currentFetch(
-                      `https://music-api.gdstudio.xyz/api.php?types=url&source=netease&id=${song.id}`,
-                      { headers: { 'Accept': 'application/json' } }
-                    );
+                    const urlRes = await currentFetch(`https://api.meting.cf/netease/url?id=${song.id}`, {
+                      headers: { 'Accept': 'application/json' }
+                    });
                     
                     if (urlRes.ok) {
                       const urlData = await urlRes.json();
@@ -347,16 +341,18 @@ app.get('/api/music/search', async (req, res) => {
                         results.push({
                           id: song.id,
                           name: song.name,
-                          artist: song.artist[0]?.name || song.artist,
-                          album: song.album?.name || '未知专辑',
-                          duration: Math.round(song.duration / 1000) || 0,
+                          artist: song.artist,
+                          album: song.album || '未知专辑',
+                          duration: song.duration || 0,
                           previewUrl: urlData.url,
-                          coverUrl: song.album?.picUrl || song.cover
+                          coverUrl: song.cover
                         });
+                        // 已经获取到3个结果就停止
+                        if (results.length >= limit) break;
                       }
                     }
-                  } catch (urlErr) {
-                    console.log('[YYFang] Failed to get URL for:', song.id);
+                  } catch (urlError) {
+                    console.log(`[YYFang] Failed to get URL for song ${song.id}`);
                   }
                 }
               }
