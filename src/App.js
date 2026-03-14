@@ -4,7 +4,7 @@ import {
   Martini, User, Settings2, Maximize2,
   Wine, Droplets, ThermometerSnowflake,
   Sparkles, Lightbulb, GlassWater,
-  Users, HeartOff, Loader2, Camera, X
+  Users, HeartOff, Loader2, Camera, X, Menu
 } from 'lucide-react';
 
 import { inventoryStorage, favoriteStorage, collectionStorage, customDrinkStorage } from './store/localStorageAdapter';
@@ -16,10 +16,16 @@ import RecommendationGallery from './components/RecommendationGallery';
 import { analyzeMood } from './api/moodAnalyzer';
 import { evaluateAndSortDrinks } from './engine/vectorEngine';
 import { executeRecommendationPipeline, extractRecommendationResult, executeMixologyTask } from './agents';
+import { AgentOrchestrator } from './agents/core/AgentOrchestrator';
 import { generatePhilosophyTags } from './engine/philosophyTags';
 import { fetchLiveQuotes } from './api/quoteGenerator';
 import { translateDrinkName, translateIngredient } from './data/translations';
 import MineSection from './components/MineSection';
+import SideDrawer from './components/SideDrawer';
+import MoodInputBar from './components/MoodInputBar';
+import PrescriptionPage from './components/PrescriptionPage';
+import CalendarView from './components/CalendarView';
+import HomePage from './components/HomePage';
 import { useTouchFeedback, useKeyboardNavigation, useCocktailApi } from './hooks';
 import { InteractiveButton, SwipeableCard, PageTransition, Modal } from './components/ui';
 import IngredientEditModal from './components/IngredientEditModal';
@@ -54,6 +60,57 @@ const DEFAULT_EXPLORE_CATEGORIES = [
   { label: '奶昔', value: 'Shake' },
   { label: '软饮料', value: 'Soft Drink' },
 ];
+
+// === 今日色调色板 (根据情绪类型匹配) ===
+const TODAY_COLOR_PALETTE = {
+  positive: [
+    { hex: '#FFD4A3', name: '暖橙', desc: '暖意弥漫' },
+    { hex: '#FFEAA7', name: '淡金', desc: '明朗如春' },
+    { hex: '#DFE6E9', name: '霸白', desc: '清缺透彻' },
+    { hex: '#A8E6CF', name: '淡翠', desc: '清新自然' },
+  ],
+  negative: [
+    { hex: '#B8C9D9', name: '雾蓝', desc: '静而不沉' },
+    { hex: '#D5C4E0', name: '淡紫', desc: '柔和包容' },
+    { hex: '#C9D6DF', name: '银灰', desc: '平静守护' },
+    { hex: '#E8D5B7', name: '暖沙', desc: '温柔报抱' },
+  ],
+  neutral: [
+    { hex: '#F5E6CC', name: '米白', desc: '纯净自在' },
+    { hex: '#D4E2D4', name: '青白', desc: '清约畅快' },
+    { hex: '#E2D4C8', name: '淡茶', desc: '淡然舒适' },
+    { hex: '#D1D8E0', name: '云灰', desc: '从容不迫' },
+  ],
+  vent: [
+    { hex: '#E17055', name: '赫红', desc: '燃烧释放' },
+    { hex: '#D63031', name: '绞红', desc: '热烈宣泄' },
+    { hex: '#FD79A8', name: '桃红', desc: '爆发活力' },
+    { hex: '#E84393', name: '洋红', desc: '张扬放纵' },
+  ],
+  soothe: [
+    { hex: '#A3CBA9', name: '苍绿', desc: '治愈安宁' },
+    { hex: '#81ECEC', name: '淡青', desc: '清凉慰藉' },
+    { hex: '#74B9FF', name: '天蓝', desc: '平静包容' },
+    { hex: '#A29BFE', name: '藤紫', desc: '温柔报存' },
+  ],
+};
+
+function getTodayColor(emotionType, interventionType) {
+  let palette;
+  if (interventionType === 'vent') {
+    palette = TODAY_COLOR_PALETTE.vent;
+  } else if (interventionType === 'soothe') {
+    palette = TODAY_COLOR_PALETTE.soothe;
+  } else if (emotionType === 'positive') {
+    palette = TODAY_COLOR_PALETTE.positive;
+  } else if (emotionType === 'negative') {
+    palette = TODAY_COLOR_PALETTE.negative;
+  } else {
+    palette = TODAY_COLOR_PALETTE.neutral;
+  }
+  // 随机选取一个颜色
+  return palette[Math.floor(Math.random() * palette.length)];
+}
 
 const NEGATIVE_KEYWORDS = ['慢', '累', '烦', '难', '压力', 'emo', '不开心', '糟', '委屈', '失败', '丧', '崩溃', '绝望', '无助', '痛苦', '想哭', '伤心', '难过', '心塞'];
 
@@ -1294,6 +1351,13 @@ const App = () => {
     tone: 'default'
   });
 
+  // === 新增：侧边栏 + 处方页状态 ===
+  const [sideDrawerOpen, setSideDrawerOpen] = useState(false);
+  const [currentView, setCurrentView] = useState('home'); // 'home' | 'drinks' | 'mine'
+  const [showPrescription, setShowPrescription] = useState(false);
+  const [currentPrescription, setCurrentPrescription] = useState(null);
+  const [prescriptionHistory, setPrescriptionHistory] = useState([]);
+
   // Track if session ingredients have been initialized from inventory
   const isSessionInitialized = useRef(false);
   const isQuoteFetching = useRef(false);
@@ -1367,6 +1431,56 @@ const App = () => {
     setCustomDrinks(updatedDrinks);
     console.log('✨ 自定义饮品已保存:', savedDrink.name);
   };
+
+  // === 处方历史管理 ===
+  const PRESCRIPTION_STORAGE_KEY = 'moodmix_prescription_history';
+  
+  // 加载处方历史
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(PRESCRIPTION_STORAGE_KEY);
+      if (stored) {
+        setPrescriptionHistory(JSON.parse(stored));
+      }
+    } catch (error) {
+      console.error('Failed to load prescription history:', error);
+    }
+  }, []);
+
+  // 保存处方到历史
+  const savePrescriptionToHistory = useCallback((prescription) => {
+    setPrescriptionHistory(prev => {
+      const newHistory = [prescription, ...prev].slice(0, 100); // 最多保存100条
+      try {
+        localStorage.setItem(PRESCRIPTION_STORAGE_KEY, JSON.stringify(newHistory));
+      } catch (error) {
+        console.error('Failed to save prescription history:', error);
+      }
+      return newHistory;
+    });
+  }, []);
+
+  // 侧边栏菜单点击处理
+  const handleSideMenuSelect = useCallback((menuId) => {
+    setCurrentView(menuId === 'home' ? 'home' : menuId);
+    // 如果切换到首页，重置相关状态
+    if (menuId === 'home') {
+      setShowRecommendationGallery(false);
+      setCurrentDrink(null);
+    }
+  }, []);
+
+  // 显示处方页
+  const showPrescriptionPage = useCallback((prescription) => {
+    setCurrentPrescription(prescription);
+    setShowPrescription(true);
+  }, []);
+
+  // 关闭处方页
+  const closePrescriptionPage = useCallback(() => {
+    setShowPrescription(false);
+    setCurrentPrescription(null);
+  }, []);
 
   // ─── TheCocktailDB API Hook ───
   const {
@@ -1708,7 +1822,52 @@ const App = () => {
       setCurrentBatchIndex(0);
       setCurrentCardIndex(0);
       setMixMode('home');
-      setShowRecommendationGallery(true);
+
+      // === 生成今日处方并显示处方页 ===
+      const todayColor = getTodayColor(emotionType, currentInterventionType);
+      const topDrink = pool[0] || null;
+      const quote = customQuotes && Object.values(customQuotes)[0];
+      
+      const basePrescription = {
+        date: new Date().toISOString(),
+        todayColor,
+        quote,
+        drink: topDrink,
+        moodInput: combinedInput,
+        emotionType,
+        interventionType: currentInterventionType,
+        activity: null,
+        music: null,
+        sentence: null,
+      };
+      
+      setCurrentPrescription(basePrescription);
+      setShowPrescription(true);
+      
+      console.log(`[Timer] ${Math.round(performance.now() - startTime)}ms: 处方页已显示`);
+
+      // 异步执行Composer生成多维处方（不阻塞用户查看）
+      (async () => {
+        try {
+          const orchestrator = new AgentOrchestrator();
+          const composerResult = await orchestrator.executeComposersParallel(agentResult.context);
+          
+          if (composerResult.success && composerResult.prescription) {
+            const fullPrescription = {
+              ...basePrescription,
+              todayColor: composerResult.prescription.color?.color || todayColor,
+              activity: composerResult.prescription.activity,
+              music: composerResult.prescription.music,
+              sentence: composerResult.prescription.sentence,
+            };
+            
+            setCurrentPrescription(fullPrescription);
+            console.log(`[Timer] ${Math.round(performance.now() - startTime)}ms: 多维处方生成完成`);
+          }
+        } catch (err) {
+          console.warn('多维处方生成失败:', err.message);
+        }
+      })();
 
       console.log(`[Timer] ${Math.round(performance.now() - startTime)}ms: handleStartGeneration 流程准备就绪`);
 
@@ -1888,8 +2047,58 @@ const App = () => {
       setCurrentBatchIndex(0);
       setCurrentCardIndex(0);
       setMixMode('home');
-      setShowRecommendationGallery(true);
-      console.log(`[Timer] ${Math.round(performance.now() - startTime)}ms: 结果渲染准备就绪，展示画廊`);
+
+      // === 并行生成多维处方（颜色/活动/音乐/句子） ===
+      console.log(`[Timer] ${Math.round(performance.now() - startTime)}ms: 开始并行生成多维处方...`);
+      
+      // 先显示基础处方页（饰品+默认颜色）
+      const todayColor = getTodayColor(emotionType, interventionType);
+      const topDrink = pool[0] || null;
+      const quote = customQuotes && Object.values(customQuotes)[0];
+      
+      const basePrescription = {
+        date: new Date().toISOString(),
+        todayColor,
+        quote,
+        drink: topDrink,
+        moodInput: combinedInput,
+        emotionType,
+        interventionType,
+        activity: null,
+        music: null,
+        sentence: null,
+      };
+      
+      setCurrentPrescription(basePrescription);
+      setShowPrescription(true);
+      
+      console.log(`[Timer] ${Math.round(performance.now() - startTime)}ms: 基础处方页已显示`);
+      
+      // 异步执行Composer生成多维处方（不阻塞用户查看）
+      (async () => {
+        try {
+          const orchestrator = new AgentOrchestrator();
+          const composerResult = await orchestrator.executeComposersParallel(agentResult.context);
+          
+          if (composerResult.success && composerResult.prescription) {
+            const fullPrescription = {
+              ...basePrescription,
+              // 使用ColorComposer生成的颜色（如果成功）
+              todayColor: composerResult.prescription.color?.color || todayColor,
+              activity: composerResult.prescription.activity,
+              music: composerResult.prescription.music,
+              sentence: composerResult.prescription.sentence,
+            };
+            
+            setCurrentPrescription(fullPrescription);
+            console.log(`[Timer] ${Math.round(performance.now() - startTime)}ms: 多维处方生成完成`);
+          }
+        } catch (err) {
+          console.warn('多维处方生成失败，使用基础处方:', err.message);
+        }
+      })();
+      
+      console.log(`[Timer] ${Math.round(performance.now() - startTime)}ms: 处方页准备就绪，展示今日处方`);
 
     } catch (error) {
       console.error('分析/推荐出错:', error);
@@ -1898,7 +2107,7 @@ const App = () => {
       setMixMode('home');
       showFriendlyNotice('灵感有些迟疑', '分析网络可能存在波动，请稍后再试。', 'error');
     }
-  }, [moodInput, selectedMood, sessionIngredients, apiDrinks, customDrinks, showFriendlyNotice]);
+  }, [moodInput, selectedMood, sessionIngredients, apiDrinks, customDrinks, customQuotes, showFriendlyNotice]);
 
   const toggleIngredient = useCallback((id) => {
     setCheckedIngredients(prev => ({ ...prev, [id]: !prev[id] }));
@@ -1931,7 +2140,8 @@ const App = () => {
       tabIndex={-1}
     >
       <main className="flex-1 flex flex-col w-full relative">
-        {activeTab === 'mix' && showRecommendationGallery && visibleDrinks.length > 0 && (
+        {/* === 推荐结果画廊 === */}
+        {currentView === 'home' && showRecommendationGallery && visibleDrinks.length > 0 && (
           <RecommendationGallery
             drinks={visibleDrinks}
             onBack={() => {
@@ -1939,7 +2149,7 @@ const App = () => {
               setMixMode('home');
             }}
             onStartMaking={(drink) => {
-              setCurrentDrink(drink); // Use the passed drink object which RecommendationGallery provides
+              setCurrentDrink(drink);
             }}
             onShuffle={handleShuffle}
             onNavigate={handleNavClick}
@@ -1952,42 +2162,14 @@ const App = () => {
           />
         )}
 
-        {activeTab === 'mix' && !showRecommendationGallery && !currentDrink && (
+        {/* === 首页 - 新布局 === */}
+        {currentView === 'home' && !showRecommendationGallery && !currentDrink && (
           <div className="flex-1 flex flex-col relative animate-in fade-in duration-500">
-            {(mixMode === 'home' || mixMode === 'generating') && (
-              <MoodInputSection
-                moodInput={moodInput}
-                setMoodInput={setMoodInput}
-                selectedMood={selectedMood}
-                setSelectedMood={setSelectedMood}
-                onGenerate={processMoodAndGenerate}
-                buttonFeedback={{ ...buttonFeedback, loadingText: buttonLoadingText }}
-                isMixing={mixMode === 'generating'}
-                ingredientCount={sessionIngredients.length}
-                onEditIngredients={() => setShowIngredientModal(true)}
-                onNavigate={handleNavClick}
-                activeTab={activeTab}
-              />
-            )}
-
-            {mixMode === 'results' && (
-              <PageTransition animation="slide" duration={500}>
-                <ResultsSection
-                  drinks={apiDrinks}
-                  currentIndex={currentCardIndex}
-                  onIndexChange={setCurrentCardIndex}
-                  onBack={() => setMixMode('home')}
-                  onHelp={() => setShowHelper(true)}
-                  onSelect={setCurrentDrink}
-                  buttonFeedback={buttonFeedback}
-                  moodResult={moodResult}
-                />
-              </PageTransition>
-            )}
+            <HomePage isMixing={mixMode === 'generating'} />
           </div>
         )}
 
-        {activeTab === 'explore' && !currentDrink && (
+        {(activeTab === 'explore' || currentView === 'drinks') && !currentDrink && (
           <PageTransition animation="fade" duration={400}>
             <ExploreSection
               category={exploreCategory}
@@ -2009,7 +2191,19 @@ const App = () => {
           </PageTransition>
         )}
 
-        {activeTab === 'mine' && !currentDrink && (
+        {/* === “我的”页面 - 使用新的 CalendarView === */}
+        {currentView === 'mine' && !currentDrink && (
+          <PageTransition animation="fade" duration={400}>
+            <CalendarView
+              prescriptionHistory={prescriptionHistory}
+              onSelectDate={showPrescriptionPage}
+              onBack={() => setCurrentView('home')}
+            />
+          </PageTransition>
+        )}
+
+        {/* === 原有 MineSection (保留作为 Tab 导航备用) === */}
+        {activeTab === 'mine' && currentView !== 'mine' && !currentDrink && (
           <PageTransition animation="fade" duration={400}>
             <MineSection
               userInventory={userInventory}
@@ -2061,9 +2255,62 @@ const App = () => {
         )}
       </main>
 
-      {!currentDrink && !isFocusMode && (
-        <NavigationBar activeTab={activeTab} onTabChange={handleNavClick} />
+      {/* === 汉堡菜单按钮 (仅首页显示) === */}
+      {currentView === 'home' && !currentDrink && !isFocusMode && !showRecommendationGallery && (
+        <button 
+          onClick={() => setSideDrawerOpen(true)}
+          className="fixed top-[calc(env(safe-area-inset-top,0px)+12px)] left-4 z-50 p-2.5 
+                     rounded-full bg-white/80 backdrop-blur-lg shadow-md 
+                     hover:bg-white transition-all active:scale-95"
+          aria-label="打开菜单"
+        >
+          <Menu size={22} className="text-gray-700" />
+        </button>
       )}
+
+      {/* === 侧边栏抽屉 === */}
+      <SideDrawer
+        isOpen={sideDrawerOpen}
+        onClose={() => setSideDrawerOpen(false)}
+        onMenuSelect={handleSideMenuSelect}
+        activeMenu={currentView}
+      />
+
+      {/* === 底部输入框 (仅首页显示) === */}
+      {currentView === 'home' && !currentDrink && !isFocusMode && !showRecommendationGallery && (
+        <MoodInputBar
+          value={moodInput}
+          onChange={setMoodInput}
+          onSubmit={processMoodAndGenerate}
+          selectedTag={selectedMood}
+          onTagSelect={setSelectedMood}
+          isLoading={mixMode === 'generating'}
+        />
+      )}
+
+      {/* === 处方页 === */}
+      <PrescriptionPage
+        isOpen={showPrescription}
+        onClose={closePrescriptionPage}
+        todayColor={currentPrescription?.todayColor}
+        quoteContent={currentPrescription?.quote || (customQuotes && Object.values(customQuotes)[0])}
+        sentenceContent={currentPrescription?.sentence?.sentence}
+        drinkRecommendation={currentPrescription?.drink || (visibleDrinks && visibleDrinks[0])}
+        moodContext={moodResult}
+        activityRecommendation={currentPrescription?.activity}
+        musicRecommendation={currentPrescription?.music}
+        isHistoryView={!!currentPrescription?.date}
+        onDrinkClick={(drink) => {
+          closePrescriptionPage();
+          setCurrentDrink(drink);
+        }}
+        onSave={() => {
+          if (currentPrescription) {
+            savePrescriptionToHistory(currentPrescription);
+          }
+          closePrescriptionPage();
+        }}
+      />
 
 
 

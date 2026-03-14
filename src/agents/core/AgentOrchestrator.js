@@ -446,4 +446,210 @@ export function extractRecommendationResult(context) {
   return context.getRecommendationResult();
 }
 
+/**
+ * 并行执行多个Composer生成多维处方
+ * 
+ * 此方法用于在PatternAnalyzer完成后，并行执行5个独立Composer：
+ * 1. ColorComposer - 今日颜色
+ * 2. ActivityComposer - 活动推荐
+ * 3. MusicComposer - 音乐氛围
+ * 4. SentenceComposer - 心理锚点句
+ * 5. Drink通路 - VectorTranslator + CreativeCopywriter (已有)
+ */
+AgentOrchestrator.prototype.executeComposersParallel = async function(context, composerConfigs = {}) {
+  console.log('\n┌─ 并行Composer执行 ────────────────────────────────────────┐');
+  console.log('│ 🎨 启动5跪Composer并行执行...');
+  
+  const startTime = performance.now();
+  
+  // 动态导入Composer（避免循环依赖）
+  const { ColorComposer } = await import('../specialized/ColorComposer');
+  const { ActivityComposer } = await import('../specialized/ActivityComposer');
+  const { MusicComposer } = await import('../specialized/MusicComposer');
+  const { SentenceComposer } = await import('../specialized/SentenceComposer');
+  
+  // 创建Composer实例
+  const colorComposer = new ColorComposer(composerConfigs.color);
+  const activityComposer = new ActivityComposer(composerConfigs.activity);
+  const musicComposer = new MusicComposer(composerConfigs.music);
+  const sentenceComposer = new SentenceComposer(composerConfigs.sentence);
+  
+  // 并行执行所有Composer
+  const composerPromises = [
+    colorComposer.execute(context).catch(err => ({ 
+      success: false, 
+      error: err.message, 
+      agent: 'ColorComposer' 
+    })),
+    activityComposer.execute(context).catch(err => ({ 
+      success: false, 
+      error: err.message, 
+      agent: 'ActivityComposer' 
+    })),
+    musicComposer.execute(context).catch(err => ({ 
+      success: false, 
+      error: err.message, 
+      agent: 'MusicComposer' 
+    })),
+    sentenceComposer.execute(context).catch(err => ({ 
+      success: false, 
+      error: err.message, 
+      agent: 'SentenceComposer' 
+    }))
+  ];
+  
+  // 等待所有Composer完成
+  const [colorResult, activityResult, musicResult, sentenceResult] = await Promise.all(composerPromises);
+  
+  const endTime = performance.now();
+  const totalDuration = Math.round(endTime - startTime);
+  
+  // 打印结果
+  console.log('│');
+  console.log(`│ 🎨 ColorComposer: ${colorResult.success ? '✅' : '❌'} ${colorResult.data?.color?.name || colorResult.error || ''}`);
+  console.log(`│ 🏎️ ActivityComposer: ${activityResult.success ? '✅' : '❌'} ${activityResult.data?.primary?.name || activityResult.error || ''}`);
+  console.log(`│ 🎵 MusicComposer: ${musicResult.success ? '✅' : '❌'} ${musicResult.data?.moodType || musicResult.error || ''}`);
+  console.log(`│ 📝 SentenceComposer: ${sentenceResult.success ? '✅' : '❌'} ${sentenceResult.data?.sentence?.substring(0,20) || sentenceResult.error || ''}...`);
+  console.log('│');
+  console.log(`│ ⏱️ 并行执行总耗时: ${totalDuration}ms`);
+  console.log('└' + '─'.repeat(56) + '┘');
+  
+  // 组装处方结果
+  const prescription = {
+    color: colorResult.success ? colorResult.data : null,
+    activity: activityResult.success ? activityResult.data : null,
+    music: musicResult.success ? musicResult.data : null,
+    sentence: sentenceResult.success ? sentenceResult.data : null,
+    timestamp: new Date().toISOString(),
+    composerDuration: totalDuration,
+    composerResults: {
+      color: colorResult,
+      activity: activityResult,
+      music: musicResult,
+      sentence: sentenceResult
+    }
+  };
+  
+  // 存储到上下文
+  context.setIntermediate('prescription', prescription);
+  
+  return {
+    success: true,
+    prescription,
+    duration: totalDuration
+  };
+};
+
+/**
+ * 完整的多维处方生成流程
+ * 
+ * 流程：
+ * 1. SemanticDistiller - 语义蒸馏
+ * 2. PatternAnalyzer - 辨证分析
+ * 3. 并行执行5跪Composer
+ * 4. 组装最终处方
+ */
+export async function executeFullPrescription(userInput, options = {}) {
+  const startTime = performance.now();
+  console.group('💊 [处方生成] 开始执行完整流程...');
+  
+  const { AgentContext } = await import('./AgentContext');
+  const { SemanticDistiller } = await import('../specialized/SemanticDistiller');
+  const { PatternAnalyzer } = await import('../specialized/PatternAnalyzer');
+  const { VectorTranslator } = await import('../specialized/VectorTranslator');
+  const { CreativeCopywriter } = await import('../specialized/CreativeCopywriter');
+  
+  // 创建上下文
+  const context = new AgentContext({
+    userInput,
+    inventory: options.inventory || [],
+    allDrinks: options.allDrinks || [],
+    currentTime: options.currentTime || new Date().toISOString()
+  });
+  
+  try {
+    // Step 1: 语义蒸馏
+    console.log('\n[Step 1/4] 语义蒸馏...');
+    const distiller = new SemanticDistiller();
+    const distillResult = await distiller.execute(context);
+    if (!distillResult.success) {
+      throw new Error(`SemanticDistiller failed: ${distillResult.error}`);
+    }
+    
+    // Step 2: 辨证分析
+    console.log('[Step 2/4] 辨证分析...');
+    const analyzer = new PatternAnalyzer();
+    const analyzeResult = await analyzer.execute(context);
+    if (!analyzeResult.success) {
+      throw new Error(`PatternAnalyzer failed: ${analyzeResult.error}`);
+    }
+    
+    // Step 3: 并行执行Composer
+    console.log('[Step 3/4] 并行生成多维处方...');
+    const orchestrator = new AgentOrchestrator();
+    const composerResult = await orchestrator.executeComposersParallel(context, options.composerConfigs);
+    
+    // Step 4: 饰品通路
+    console.log('[Step 4/4] 饰品推荐...');
+    const vectorTranslator = new VectorTranslator();
+    await vectorTranslator.execute(context);
+    
+    // 向量搜索
+    const { evaluateAndSortDrinks } = await import('../../engine/vectorEngine');
+    const moodData = context.getIntermediate('moodData');
+    const allDrinks = context.allDrinks;
+    const inventory = context.inventory;
+    
+    if (moodData && allDrinks?.length > 0) {
+      const pool = evaluateAndSortDrinks(moodData, allDrinks, inventory);
+      const matches = pool.map((drink, idx) => ({
+        drink,
+        similarity: drink.similarity || (1 - idx * 0.05),
+        rank: idx + 1
+      }));
+      context.setIntermediate('matches', matches);
+      
+      // 文案生成
+      const copywriter = new CreativeCopywriter();
+      await copywriter.execute(context);
+    }
+    
+    const endTime = performance.now();
+    const totalDuration = Math.round(endTime - startTime);
+    
+    console.log(`\n✨ 处方生成完成，总耗时: ${totalDuration}ms`);
+    console.groupEnd();
+    
+    // 组装最终结果
+    const prescription = context.getIntermediate('prescription') || {};
+    const matches = context.getIntermediate('matches') || [];
+    const topDrink = matches[0]?.drink;
+    const quote = context.getIntermediate('quote');
+    const patternAnalysis = context.getIntermediate('patternAnalysis');
+    
+    return {
+      success: true,
+      prescription: {
+        ...prescription,
+        drink: topDrink,
+        quote,
+        patternAnalysis,
+        matches: matches.slice(0, 5)
+      },
+      context,
+      duration: totalDuration
+    };
+    
+  } catch (error) {
+    console.error('❌ 处方生成失败:', error.message);
+    console.groupEnd();
+    
+    return {
+      success: false,
+      error: error.message,
+      context
+    };
+  }
+}
+
 export default AgentOrchestrator;
