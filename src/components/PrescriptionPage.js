@@ -214,16 +214,51 @@ const PrescriptionPage = ({
   );
 };
 
-// ========== 活动卡（3条活动，纵向排列）==========
+// ========== 小仪式卡（3条仪式，纵向排列）==========
 const ActivityCard = ({ data, cardBgColor, cardBorderColor, accentColor, cardTextColor }) => {
-  // 跟踪已完成的活动
-  const [completedActivities, setCompletedActivities] = useState({});
+  // 跟踪已完成的仪式
+  const [completedRituals, setCompletedRituals] = useState({});
 
   const toggleComplete = (index) => {
-    setCompletedActivities(prev => ({
+    setCompletedRituals(prev => ({
       ...prev,
       [index]: !prev[index]
     }));
+  };
+
+  // 根据内容推断仪式类型和图标
+  const inferRitualType = (ritual) => {
+    const text = (ritual.name || ritual.title || '') + (ritual.how || ritual.content || '');
+    
+    // 身体类
+    if (/吃|喝|茶|咖啡|水|热|温|粥|汤|食/.test(text)) {
+      return { icon: '🍵', typeName: '进食' };
+    }
+    if (/闻|香|气味|精油|檀|薰|熏/.test(text)) {
+      return { icon: '🌿', typeName: '气味' };
+    }
+    
+    // 空间类
+    if (/方位|方向|朝|东|南|西|北|面向/.test(text)) {
+      return { icon: '🧭', typeName: '方位' };
+    }
+    if (/摆|放|供|物|花|植|绿/.test(text)) {
+      return { icon: '🪴', typeName: '供物' };
+    }
+    
+    // 行为类
+    if (/时|点|早|晚|午|分钟|小时/.test(text)) {
+      return { icon: '⏰', typeName: '时机' };
+    }
+    if (/不要|避免|忌|少|别/.test(text)) {
+      return { icon: '🚫', typeName: '禁忌' };
+    }
+    if (/整理|计划|写|记|想|呼吸|冥想|静|摸|触/.test(text)) {
+      return { icon: '✨', typeName: '速效' };
+    }
+    
+    // 默认
+    return { icon: '🔮', typeName: '仪式' };
   };
 
   // 没数据时显示占位
@@ -240,14 +275,14 @@ const ActivityCard = ({ data, cardBgColor, cardBorderColor, accentColor, cardTex
       >
         <div className="flex items-center gap-2">
           <Sparkles size={16} style={{ color: accentColor }} />
-          <span className="text-gray-400">活动推荐生成中...</span>
+          <span className="text-gray-400">小仪式生成中...</span>
         </div>
       </div>
     );
   }
 
-  // 兼容数据结构：activities数组 或 单个活动
-  const activities = data.activities || (data.name ? [data] : []);
+  // 兼容数据结构：rituals数组 或 activities数组
+  const rituals = data.rituals || data.activities || (data.name ? [data] : []);
   const wuxingNote = data.wuxingNote || data.wuxing || '';
 
   return (
@@ -268,7 +303,7 @@ const ActivityCard = ({ data, cardBgColor, cardBorderColor, accentColor, cardTex
           >
             <Flame size={16} style={{ color: cardTextColor }} />
           </div>
-          <span className="text-sm font-medium" style={{ color: cardTextColor }}>今日活动</span>
+          <span className="text-sm font-medium" style={{ color: cardTextColor }}>今日小仪式</span>
         </div>
         {wuxingNote && (
           <span 
@@ -280,14 +315,18 @@ const ActivityCard = ({ data, cardBgColor, cardBorderColor, accentColor, cardTex
         )}
       </div>
 
-      {/* 三条活动 */}
+      {/* 三条小仪式 */}
       <div className="flex flex-col gap-3">
-        {activities.map((activity, index) => {
-          const title = activity.title || activity.name || '活动';
-          const reason = activity.reason || activity.why_reason || activity.why || '';
-          const how = activity.how || activity.how_steps || activity.steps || '';
+        {rituals.map((ritual, index) => {
+          // 如果没有icon/typeName，自动推断
+          const inferred = inferRitualType(ritual);
+          const icon = ritual.icon || inferred.icon;
+          const typeName = ritual.typeName || inferred.typeName;
+          const title = ritual.title || ritual.name || '仪式';
+          const content = ritual.content || ritual.how || ritual.how_steps || '';
+          const reason = ritual.reason || ritual.why_reason || ritual.why || '';
           
-          const isCompleted = completedActivities[index];
+          const isCompleted = completedRituals[index];
           
           return (
             <div 
@@ -295,9 +334,25 @@ const ActivityCard = ({ data, cardBgColor, cardBorderColor, accentColor, cardTex
               className="rounded-xl p-3 flex items-start gap-3"
               style={{ backgroundColor: 'rgba(255,255,255,0.6)' }}
             >
-              {/* 左侧内容 */}
+              {/* 左侧图标 */}
+              <div 
+                className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-lg ${isCompleted ? 'opacity-50' : ''}`}
+                style={{ backgroundColor: cardBorderColor }}
+              >
+                {icon}
+              </div>
+              
+              {/* 中间内容 */}
               <div className="flex-1 min-w-0">
-                {/* 活动名称（大字） */}
+                {/* 类型标签 */}
+                <span 
+                  className={`text-[10px] px-1.5 py-0.5 rounded-full mb-1 inline-block ${isCompleted ? 'opacity-50' : ''}`}
+                  style={{ backgroundColor: cardBorderColor, color: cardTextColor }}
+                >
+                  {typeName}
+                </span>
+                
+                {/* 仪式标题 */}
                 <h4 
                   className={`font-bold text-base leading-tight ${isCompleted ? 'text-gray-400 line-through' : 'text-gray-800'}`}
                   style={{ fontFamily: '"Songti SC", "STKaiti", "KaiTi", serif' }}
@@ -305,17 +360,17 @@ const ActivityCard = ({ data, cardBgColor, cardBorderColor, accentColor, cardTex
                   {title}
                 </h4>
                 
-                {/* 五行依据（有趣的表达） */}
-                {reason && (
+                {/* 具体内容 */}
+                {content && (
                   <p className={`text-xs mt-1 leading-relaxed ${isCompleted ? 'text-gray-300' : 'text-gray-600'}`}>
-                    {reason}
+                    {content}
                   </p>
                 )}
                 
-                {/* 具体怎么做 */}
-                {how && (
-                  <p className={`text-[11px] mt-1.5 leading-relaxed ${isCompleted ? 'text-gray-300' : 'text-gray-400'}`}>
-                    {how}
+                {/* 五行依据 */}
+                {reason && (
+                  <p className={`text-[11px] mt-1.5 leading-relaxed italic ${isCompleted ? 'text-gray-300' : 'text-gray-400'}`}>
+                    {reason}
                   </p>
                 )}
               </div>
