@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: moodmix-frontend
+    env: node
+    region: oregon
+    buildCommand: npm install && npm run build
+    startCommand: node server/prodServer.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SILICONFLOW_API_KEY
+        sync: false
+      - key: SILICONFLOW_MODEL
+        value: Qwen/Qwen2.5-72B-Instruct
+      - key: PORT
+        value: 10000

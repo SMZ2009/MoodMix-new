@@ -1,0 +1,2143 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+@layer utilities {
+  .mood-ink-tag {
+    --mood-ink-color: rgba(89, 101, 110, 0.16);
+    --mood-ink-accent: rgba(66, 78, 88, 0.68);
+    --mood-ring-color: rgba(214, 218, 223, 0.62);
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.64rem 1.12rem 0.72rem;
+    border: none;
+    background: transparent;
+    color: rgba(92, 101, 108, 0.72);
+    isolation: isolate;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: color 420ms ease, transform 320ms ease;
+  }
+
+  .mood-ink-tag::before,
+  .mood-ink-tag::after {
+    content: "";
+    position: absolute;
+    inset: 0.08rem -0.12rem;
+    pointer-events: none;
+    border-radius: 42% 58% 51% 49% / 58% 42% 56% 44%;
+  }
+
+  .mood-ink-tag::before {
+    background:
+      radial-gradient(ellipse 38% 56% at 20% 56%, color-mix(in srgb, var(--mood-ink-color) 74%, transparent) 0%, transparent 74%),
+      radial-gradient(ellipse 44% 62% at 51% 48%, color-mix(in srgb, var(--mood-ink-color) 90%, transparent) 0%, transparent 72%),
+      radial-gradient(ellipse 34% 54% at 81% 54%, color-mix(in srgb, var(--mood-ink-color) 70%, transparent) 0%, transparent 76%),
+      radial-gradient(ellipse 90% 76% at 50% 52%, color-mix(in srgb, var(--mood-ink-color) 40%, transparent) 18%, transparent 80%),
+      linear-gradient(135deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.05) 52%, rgba(186, 194, 201, 0.08));
+    opacity: 0.82;
+    filter: blur(6px) saturate(0.86);
+    transform: scale(0.98);
+    mix-blend-mode: multiply;
+    backdrop-filter: blur(8px) saturate(1.08);
+    -webkit-backdrop-filter: blur(8px) saturate(1.08);
+  }
+
+  .mood-ink-tag::after {
+    background:
+      radial-gradient(ellipse 42% 60% at 18% 57%, color-mix(in srgb, var(--mood-ink-accent) 66%, transparent) 0%, transparent 74%),
+      radial-gradient(ellipse 42% 64% at 50% 46%, color-mix(in srgb, var(--mood-ink-accent) 96%, transparent) 0%, transparent 70%),
+      radial-gradient(ellipse 36% 56% at 82% 53%, color-mix(in srgb, var(--mood-ink-accent) 64%, transparent) 0%, transparent 76%),
+      radial-gradient(ellipse 92% 78% at 50% 52%, color-mix(in srgb, var(--mood-ink-accent) 40%, transparent) 10%, transparent 82%);
+    opacity: 0;
+    filter: blur(8px) saturate(1.02);
+    transform: scale(0.9);
+    transform-origin: center;
+    mix-blend-mode: multiply;
+  }
+
+  .mood-ink-tag:hover {
+    color: rgba(70, 79, 86, 0.88);
+    transform: scale(1.015);
+  }
+
+  .mood-ink-tag.is-selected {
+    color: rgba(48, 56, 62, 0.96);
+    --mood-ring-color: rgba(164, 139, 58, 0.34);
+  }
+
+  .mood-ink-tag__label {
+    position: relative;
+    z-index: 1;
+    padding: 0 0.34rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    transition: color 420ms ease;
+  }
+
+  .mood-ink-tag__label::before {
+    content: "";
+    position: absolute;
+    inset: -0.56rem -0.92rem;
+    border-radius: 999px;
+    pointer-events: none;
+    background:
+      conic-gradient(from 132deg,
+        transparent 0deg 15deg,
+        color-mix(in srgb, white 58%, var(--mood-ring-color)) 15deg,
+        color-mix(in srgb, white 34%, var(--mood-ring-color)) 74deg,
+        color-mix(in srgb, var(--mood-ring-color) 72%, transparent) 150deg,
+        color-mix(in srgb, var(--mood-ring-color) 34%, transparent) 268deg,
+        transparent 345deg 360deg);
+    filter: blur(0.24px);
+    opacity: 0.96;
+    transform: rotate(-7deg);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    padding: 1px;
+    box-shadow: 0 0 0 0.35px rgba(255, 255, 255, 0.26) inset;
+  }
+
+  .mood-ink-tag__label.is-selected {
+    color: rgba(41, 48, 54, 0.98);
+  }
+
+  .mood-ink-tag:focus-visible {
+    outline: none;
+  }
+
+  .mood-ink-tag:focus-visible::before {
+    opacity: 0.84;
+  }
+
+  .mood-ink-tag:focus-visible::after,
+  .mood-ink-tag.is-selected::after {
+    opacity: 0.92;
+    animation: ink-bloom 620ms cubic-bezier(0.2, 0.74, 0.24, 1) forwards;
+  }
+
+  .mood-ink-tag.is-selected::before {
+    opacity: 0.34;
+  }
+
+  @media (min-width: 640px) {
+    .mood-ink-tag {
+      padding: 0.72rem 1.48rem 0.82rem;
+    }
+
+    .mood-ink-tag__label {
+      font-size: 0.92rem;
+    }
+
+    .mood-ink-tag__label::before {
+      inset: -0.62rem -1.06rem;
+    }
+  }
+
+  .bg-dreamy-gradient {
+    /* 
+      使用背景图片替代渐变动画
+      图片路径：./background-dreamy.png
+      保持全屏覆盖，防止重复
+    */
+    background: url('./background-dreamy.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+  }
+
+  .glass-card {
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  }
+
+  .glass-input {
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+  }
+
+  .glass-input:focus-within {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 0 4px rgba(233, 213, 255, 0.3);
+  }
+}
+
+@keyframes ink-bloom {
+  0% {
+    opacity: 0.08;
+    transform: scale(0.82);
+    filter: blur(11px) saturate(0.92);
+  }
+
+  58% {
+    opacity: 0.72;
+    transform: scale(1.04);
+    filter: blur(9px) saturate(1);
+  }
+
+  100% {
+    opacity: 0.92;
+    transform: scale(1.08);
+    filter: blur(8px) saturate(1.04);
+  }
+}
+
+@keyframes ember-drop-breathe {
+  0% {
+    opacity: 0.42;
+    transform: translateY(0) scale(0.94);
+    filter: drop-shadow(0 0 0 rgba(226, 164, 75, 0));
+  }
+
+  50% {
+    opacity: 0.88;
+    transform: translateY(-0.5px) scale(1.04);
+    filter: drop-shadow(0 0 8px rgba(226, 164, 75, 0.28));
+  }
+
+  100% {
+    opacity: 0.42;
+    transform: translateY(0) scale(0.94);
+    filter: drop-shadow(0 0 0 rgba(226, 164, 75, 0));
+  }
+}
+
+@keyframes seal-ember-pulse {
+  0% {
+    opacity: 0.2;
+    transform: scale(0.92);
+  }
+
+  50% {
+    opacity: 0.42;
+    transform: scale(1.08);
+  }
+
+  100% {
+    opacity: 0.2;
+    transform: scale(0.92);
+  }
+}
+
+@keyframes seal-ink-ripple {
+  0% {
+    opacity: 0;
+    transform: scale(0.82);
+  }
+
+  18% {
+    opacity: 0.16;
+    transform: scale(0.94);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.34);
+  }
+}
+
+@keyframes jade-pendant-float {
+  0% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-4px);
+  }
+
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes brush-breathe {
+  0% {
+    transform: rotate(45deg) translateY(0);
+  }
+
+  50% {
+    transform: rotate(45deg) translateY(-1.5px);
+  }
+
+  100% {
+    transform: rotate(45deg) translateY(0);
+  }
+}
+
+@keyframes ink-tap-ripple {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+
+  20% {
+    opacity: 0.18;
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.3);
+  }
+}
+
+@keyframes dreamy-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 50% 100%;
+  }
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+:root {
+  --header-height: 60px;
+  --bottom-nav-height: 70px;
+  --safe-area-top: env(safe-area-inset-top);
+  --safe-area-bottom: env(safe-area-inset-bottom);
+  --safe-area-left: env(safe-area-inset-left);
+  --safe-area-right: env(safe-area-inset-right);
+}
+
+@media (max-width: 340px) {
+  :root {
+    --header-height: 50px;
+    --bottom-nav-height: 60px;
+  }
+}
+
+@media (min-width: 768px) {
+  :root {
+    --header-height: 70px;
+    --bottom-nav-height: 80px;
+  }
+}
+
+@media (max-height: 600px) {
+  .min-h-screen-safe {
+    min-height: -webkit-stretch;
+    min-height: stretch;
+  }
+
+  .pb-nav-safe {
+    padding-bottom: calc(var(--bottom-nav-height, 70px) + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@supports (padding: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 20px);
+  }
+
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .pl-safe {
+    padding-left: env(safe-area-inset-left);
+  }
+
+  .pr-safe {
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+  outline: none;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+::selection {
+  background-color: rgba(13, 242, 89, 0.3);
+}
+
+:focus-visible {
+  outline: 2px solid #0df259;
+  outline-offset: 2px;
+}
+
+* {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+  box-sizing: border-box;
+}
+
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
+.transition-colors {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.transition-transform {
+  transition-property: transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
+.transition-opacity {
+  transition-property: opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 200ms;
+}
+
+.active\:scale-95:active {
+  transform: scale(0.95);
+}
+
+.active\:scale-90:active {
+  transform: scale(0.9);
+}
+
+.active\:scale-98:active {
+  transform: scale(0.98);
+}
+
+.active\:scale-75:active {
+  transform: scale(0.75);
+}
+
+@media (hover: hover) {
+  .hover\:scale-102:hover {
+    transform: scale(1.02);
+  }
+}
+
+@media (hover: none) {
+  .hover\:scale-102:active {
+    transform: scale(1.02);
+  }
+}
+
+@supports (padding: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+@layer utilities {
+  .shadow-soft {
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.06);
+  }
+
+  .bg-accent-peach {
+    background-color: #FFE4D6;
+  }
+
+  .text-primary {
+    color: #608a6e;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .backdrop-blur-xl {
+    backdrop-filter: blur(24px);
+  }
+
+  .backdrop-blur-md {
+    backdrop-filter: blur(12px);
+  }
+
+  .backdrop-blur-sm {
+    backdrop-filter: blur(8px);
+  }
+}
+
+.animate-in {
+  animation-fill-mode: both;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.slide-in-from-bottom {
+  animation: slideInFromBottom 0.5s ease-out;
+}
+
+@keyframes slideInFromBottom {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.slide-in-from-top {
+  animation: slideInFromTop 0.4s ease-out;
+}
+
+@keyframes slideInFromTop {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.slide-out-to-bottom {
+  animation: slideOutToBottom 0.3s ease-in forwards;
+}
+
+@keyframes slideOutToBottom {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  to {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+.slide-out-to-top {
+  animation: slideOutToTop 0.3s ease-in forwards;
+}
+
+@keyframes slideOutToTop {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  to {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+}
+
+.slide-in-from-right {
+  animation: slideInFromRight 0.4s ease-out;
+}
+
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.slide-in-from-left {
+  animation: slideInFromLeft 0.4s ease-out;
+}
+
+@keyframes slideInFromLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.zoom-in-110 {
+  animation: zoomIn110 0.4s ease-out;
+}
+
+@keyframes zoomIn110 {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.zoom-out-90 {
+  animation: zoomOut90 0.2s ease-in forwards;
+}
+
+@keyframes zoomOut90 {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  to {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+}
+
+.fade-out {
+  animation: fadeOut 0.2s ease-in forwards;
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.bounce {
+  animation: bounce 0.6s ease-in-out infinite;
+}
+
+@keyframes bounce {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes progressPulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@media (max-width: 768px) {
+  .no-scrollbar {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  button,
+  [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+
+  .pagination-dot {
+    min-height: 6px;
+    min-width: 6px;
+  }
+}
+
+@media (min-width: 769px) {
+  .no-scrollbar {
+    scrollbar-width: thin;
+  }
+
+  button:hover:not(:disabled),
+  [role="button"]:hover:not(:disabled) {
+    transform: scale(1.02);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.aspect-ratio {
+  aspect-ratio: var(--aspect-ratio, 1 / 1);
+}
+
+.aspect-video {
+  aspect-ratio: 16 / 9;
+}
+
+.aspect-photo {
+  aspect-ratio: 4 / 3;
+}
+
+.aspect-portrait {
+  aspect-ratio: 3 / 4;
+}
+
+.aspect-card {
+  aspect-ratio: 3 / 4.5;
+}
+
+.tracking-tight {
+  letter-spacing: -0.025em;
+}
+
+.tracking-wide {
+  letter-spacing: 0.025em;
+}
+
+.tracking-wider {
+  letter-spacing: 0.05em;
+}
+
+.tracking-widest {
+  letter-spacing: 0.1em;
+}
+
+.font-serif {
+  font-family: 'Georgia', 'Times New Roman', serif;
+}
+
+.italic {
+  font-style: italic;
+}
+
+.leading-tight {
+  line-height: 1.25;
+}
+
+.leading-relaxed {
+  line-height: 1.625;
+}
+
+@layer utilities {
+  .gap-safe {
+    gap: var(--spacing, 1rem);
+  }
+
+  .m-safe {
+    margin: var(--spacing, 1rem);
+  }
+
+  .p-safe {
+    padding: var(--spacing, 1rem);
+  }
+}
+
+/* Mixing Cup Animations */
+@keyframes swirl {
+  0% {
+    transform: rotate(0deg) scale(1.2);
+  }
+
+  50% {
+    transform: rotate(180deg) scale(1.3);
+  }
+
+  100% {
+    transform: rotate(360deg) scale(1.2);
+  }
+}
+
+@keyframes fill-up {
+  0% {
+    top: 120%;
+    filter: grayscale(100%) drop-shadow(0 0 0 rgba(0, 0, 0, 0));
+    transform: rotate(0deg);
+  }
+
+  100% {
+    top: -30%;
+    filter: grayscale(0%) drop-shadow(0 0 30px rgba(167, 139, 250, 0.6));
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes particle-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(100px) scale(0);
+  }
+
+  20% {
+    opacity: 0.8;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-300px) scale(1.5);
+  }
+}
+
+@keyframes spoon-stir {
+  0% {
+    transform: rotate(0deg) translateX(25px) rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg) translateX(25px) rotate(-360deg);
+  }
+}
+
+@keyframes bubble-float {
+  0% {
+    transform: translateY(100%) scale(0);
+    opacity: 0;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(-50%) scale(1.5);
+    opacity: 0;
+  }
+}
+
+.spoon-path {
+  animation: spoon-stir 0.6s linear infinite;
+  transform-origin: center center;
+}
+
+.bubble {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
+  animation: bubble-float 2s ease-out infinite;
+}
+
+@keyframes particle-in {
+  0% {
+    opacity: 0;
+    transform: translate(var(--tx), var(--ty)) scale(0);
+  }
+
+  20% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.5);
+  }
+}
+
+@keyframes spoon-stir {
+  0% {
+    transform: rotate(0deg) translateX(15px) rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg) translateX(15px) rotate(-360deg);
+  }
+}
+
+@keyframes bubble-float {
+  0% {
+    transform: translateY(100%) scale(0);
+    opacity: 0;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(-20%) scale(1.2);
+    opacity: 0;
+  }
+}
+
+.mixing-vortex {
+  animation: swirl 2s linear infinite;
+  transform-origin: center center;
+}
+
+.particle {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: particle-in 1.5s ease-in infinite;
+}
+
+.spoon-path {
+  animation: spoon-stir 0.8s linear infinite;
+  transform-origin: center center;
+}
+
+.bubble {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.4);
+  animation: bubble-float 1.5s ease-out infinite;
+}
+
+
+/* ══════════════════════════════════════════════════════════════════
+   原料管理弹窗 — 东方韵味 (Ingredient Edit Modal – Oriental Style)
+   ══════════════════════════════════════════════════════════════════ */
+
+.ingredient-modal-container {
+  padding: 1.25rem 1.25rem 1.75rem;
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(40px) saturate(1.2);
+  -webkit-backdrop-filter: blur(40px) saturate(1.2);
+  border-radius: 1.5rem;
+  width: 100%;
+  max-height: 78vh;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  animation: modal-ink-appear 0.4s cubic-bezier(0.22, 0.68, 0, 1.04) both;
+}
+
+@keyframes modal-ink-appear {
+  0% {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.ingredient-modal-title {
+  font-family: "Songti SC", "STKaiti", "KaiTi", "SimSun", serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #000000;
+  letter-spacing: 0.16em;
+  text-shadow: none;
+}
+
+.ingredient-modal-subtitle {
+  font-family: "Songti SC", "STKaiti", "KaiTi", serif;
+  font-size: 0.72rem;
+  color: rgba(0, 0, 0, 0.75);
+  letter-spacing: 0.24em;
+  font-weight: 300;
+  margin-bottom: 0.5rem;
+}
+
+.ink-divider {
+  position: relative;
+  height: 1px;
+  margin: 0.25rem 0 0.75rem;
+  background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(160, 140, 180, 0.25) 15%,
+      rgba(160, 140, 180, 0.4) 50%,
+      rgba(160, 140, 180, 0.25) 85%,
+      transparent 100%);
+  border-radius: 999px;
+}
+
+.ink-divider::after {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 20%;
+  right: 20%;
+  height: 1px;
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(255, 248, 230, 0.5) 30%,
+      rgba(255, 248, 230, 0.6) 50%,
+      rgba(255, 248, 230, 0.5) 70%,
+      transparent);
+}
+
+.ingredient-search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.75rem;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(180, 160, 200, 0.25);
+  border-radius: 0.75rem;
+  transition: all 0.3s ease;
+}
+
+.ingredient-search-wrapper:focus-within {
+  background: rgba(255, 255, 255, 0.65);
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06);
+}
+
+.ingredient-search-icon {
+  color: rgba(100, 90, 80, 0.55);
+  flex-shrink: 0;
+}
+
+.ingredient-search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: "Songti SC", "STKaiti", "KaiTi", serif;
+  font-size: 0.875rem;
+  color: rgba(55, 48, 42, 0.88);
+  letter-spacing: 0.06em;
+}
+
+.ingredient-search-input::placeholder {
+  color: rgba(100, 90, 80, 0.4);
+  font-style: italic;
+}
+
+.ingredient-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 180px;
+  max-height: calc(78vh - 220px);
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 130, 100, 0.2) transparent;
+}
+
+.ingredient-scroll-area::-webkit-scrollbar {
+  width: 4px;
+}
+
+.ingredient-scroll-area::-webkit-scrollbar-thumb {
+  background: rgba(148, 130, 100, 0.2);
+  border-radius: 999px;
+}
+
+.ingredient-section-label {
+  font-family: "Songti SC", "STKaiti", "KaiTi", serif;
+  font-size: 0.7rem;
+  color: rgba(100, 90, 80, 0.55);
+  letter-spacing: 0.14em;
+  margin-bottom: 0.5rem;
+  padding-left: 2px;
+}
+
+.ingredient-search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.ingredient-search-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(180, 160, 200, 0.2);
+  border-radius: 0.625rem;
+  transition: all 0.25s ease;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+
+.ingredient-search-item:hover {
+  background: rgba(255, 255, 255, 0.65);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.ingredient-search-item.is-owned {
+  background: rgba(136, 176, 144, 0.1);
+  border-color: rgba(136, 168, 128, 0.15);
+}
+
+.ingredient-search-item-name {
+  font-family: "Songti SC", "STKaiti", "KaiTi", serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(55, 48, 42, 0.88);
+  letter-spacing: 0.06em;
+  margin-right: 0.4rem;
+}
+
+.ingredient-search-item-en {
+  font-size: 0.68rem;
+  color: rgba(100, 90, 80, 0.45);
+  font-weight: 400;
+}
+
+.ingredient-search-item-cat {
+  font-family: "Songti SC", "STKaiti", "KaiTi", serif;
+  font-size: 0.62rem;
+  color: rgba(100, 90, 80, 0.55);
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  padding: 0.15rem 0.4rem;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 0.3rem;
+}
+
+.ingredient-search-item-action {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-family: "Songti SC", "STKaiti", "KaiTi", serif;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: rgba(120, 80, 160, 0.8);
+  white-space: nowrap;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.4rem;
+  background: rgba(192, 132, 252, 0.1);
+  transition: all 0.2s ease;
+}
+
+.ingredient-search-item-action.is-owned {
+  color: rgba(96, 138, 110, 0.8);
+  background: rgba(136, 176, 144, 0.15);
+}
+
+.ingredient-search-item:hover .ingredient-search-item-action {
+  background: rgba(208, 188, 148, 0.25);
+}
+
+.ingredient-search-item.is-owned:hover .ingredient-search-item-action.is-owned {
+  color: rgba(180, 80, 70, 0.75);
+  background: rgba(200, 120, 110, 0.12);
+}
+
+.ingredient-custom-add {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  margin-top: 0.25rem;
+  font-family: "Songti SC", "STKaiti", "KaiTi", serif;
+  font-size: 0.8rem;
+  color: rgba(120, 80, 160, 0.75);
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+  border-radius: 0.625rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  letter-spacing: 0.04em;
+}
+
+.ingredient-custom-add:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: rgba(200, 180, 140, 0.95);
+}
+
+.ingredient-empty-search,
+.ingredient-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1rem;
+  text-align: center;
+}
+
+.ingredient-empty-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.05);
+  color: rgba(100, 90, 80, 0.3);
+  margin-bottom: 0.75rem;
+}
+
+.ingredient-empty-search p,
+.ingredient-empty-state p {
+  font-family: "Songti SC", "STKaiti", "KaiTi", serif;
+  font-size: 0.85rem;
+  color: #000000;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.25rem;
+}
+
+.ingredient-empty-state span {
+  font-size: 0.72rem;
+  color: rgba(0, 0, 0, 0.6);
+  letter-spacing: 0.06em;
+}
+
+.ingredient-tag-cloud {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding-bottom: 0.5rem;
+}
+
+.ingredient-category-group {
+  margin-bottom: 0.15rem;
+}
+
+.ingredient-category-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  font-family: "Songti SC", "STKaiti", "KaiTi", serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.8);
+  letter-spacing: 0.1em;
+  border-radius: 0.4rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: transparent;
+  border: none;
+  text-align: left;
+}
+
+.ingredient-category-header:hover {
+  background: rgba(0, 0, 0, 0.03);
+  color: rgba(55, 48, 42, 0.88);
+}
+
+.ingredient-category-header.is-active {
+  color: #000000;
+}
+
+.ingredient-category-count {
+  font-size: 0.65rem;
+  font-weight: 400;
+  color: rgba(148, 130, 100, 0.45);
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.1rem 0.4rem;
+  border-radius: 0.3rem;
+  min-width: 1.4rem;
+  text-align: center;
+}
+
+.ingredient-tags-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding: 0.35rem 0.25rem 0.5rem;
+  animation: tags-fade-in 0.3s ease both;
+}
+
+@keyframes tags-fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ingredient-ink-tag {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.32rem 0.65rem 0.38rem;
+  font-family: "Songti SC", "STKaiti", "KaiTi", serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgba(60, 59, 54, 0.80);
+  letter-spacing: 0.05em;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(60, 59, 54, 0.15);
+  border-radius: 42% 58% 51% 49% / 58% 42% 56% 44%;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  isolation: isolate;
+}
+
+.ingredient-ink-tag::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.ingredient-ink-tag:hover {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(255, 255, 255, 0.28);
+  color: rgba(55, 48, 42, 0.95);
+  transform: scale(1.03);
+}
+
+.ingredient-ink-tag:active {
+  transform: scale(0.96);
+}
+
+.ingredient-ink-tag.is-owned {
+  background: linear-gradient(135deg, rgba(60, 59, 54, 0.90) 0%, rgba(40, 39, 34, 0.95) 100%);
+  border: none;
+  color: #f7f0e4;
+  box-shadow: 0 4px 14px rgba(60, 54, 40, 0.18);
+}
+
+
+.ingredient-ink-tag-x {
+  color: rgba(148, 130, 100, 0.35);
+  transition: color 0.2s ease;
+}
+
+.ingredient-ink-tag:hover .ingredient-ink-tag-x {
+  color: rgba(180, 80, 70, 0.65);
+}
+
+.ingredient-modal-footer {
+  display: flex;
+  gap: 0.5rem;
+  padding-top: 0.75rem;
+  margin-top: 0.5rem;
+  border-top: 1px solid rgba(180, 160, 200, 0.2);
+}
+
+.ingredient-btn-reset {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.7rem 1rem;
+  font-family: "Songti SC", "STKaiti", "KaiTi", serif;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: rgba(80, 70, 60, 0.65);
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(180, 160, 200, 0.2);
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  letter-spacing: 0.08em;
+}
+
+.ingredient-btn-reset:hover {
+  background: rgba(255, 255, 255, 0.55);
+  color: rgba(55, 48, 42, 0.85);
+}
+
+.ingredient-btn-reset:active {
+  transform: scale(0.96);
+}
+
+.ingredient-btn-confirm {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.7rem 1.25rem;
+  font-family: "Songti SC", "STKaiti", "KaiTi", serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #ebdfc8
+    /* Light ink paper text on dark button */
+  ;
+  background: #3c3b36;
+  /* Dark ink color */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border: 1px solid #2a2924;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  letter-spacing: 0.12em;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.ingredient-btn-confirm::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(255, 248, 230, 0.12) 50%,
+      transparent 100%);
+  transform: translateX(-100%);
+  transition: transform 0.8s ease;
+}
+
+.ingredient-btn-confirm:hover::after {
+  transform: translateX(100%);
+}
+
+.ingredient-btn-confirm:hover {
+  box-shadow:
+    0 6px 20px rgba(168, 134, 230, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.ingredient-btn-confirm:active {
+  transform: scale(0.97);
+}
+
+@media (min-width: 640px) {
+  .ingredient-modal-container {
+    padding: 1.5rem 1.5rem 1.25rem;
+    border-radius: 2rem;
+  }
+
+  .ingredient-modal-title {
+    font-size: 1.35rem;
+  }
+
+  .ingredient-search-input {
+    font-size: 0.925rem;
+  }
+
+  .ingredient-ink-tag {
+    font-size: 0.8rem;
+    padding: 0.36rem 0.75rem 0.42rem;
+  }
+
+  .ingredient-btn-confirm {
+    padding: 0.8rem 1.5rem;
+  }
+}
+
+
+/* ══════════════════════════════════════════════════════════════════
+   东方韵味 — 复用型表单组件样式 (Oriental Reusable Form Styles)
+   ══════════════════════════════════════════════════════════════════ */
+
+.oriental-label {
+  display: block;
+  font-family: "Songti SC", "STKaiti", "KaiTi", serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #000000;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.4rem;
+}
+
+.oriental-input {
+  width: 100%;
+  padding: 0.6rem 0.85rem;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(180, 160, 200, 0.25);
+  border-radius: 0.75rem;
+  font-family: "Songti SC", "STKaiti", "KaiTi", serif;
+  font-size: 0.85rem;
+  color: #000000;
+  letter-spacing: 0.04em;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.oriental-input:focus {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06);
+}
+
+.oriental-input::placeholder {
+  color: rgba(0, 0, 0, 0.5);
+  font-style: italic;
+}
+
+.oriental-textarea {
+  width: 100%;
+  padding: 0.6rem 0.85rem;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(180, 160, 200, 0.25);
+  border-radius: 0.75rem;
+  font-family: "Songti SC", "STKaiti", "KaiTi", serif;
+  font-size: 0.85rem;
+  color: #000000;
+  letter-spacing: 0.04em;
+  outline: none;
+  resize: none;
+  transition: all 0.3s ease;
+}
+
+.oriental-textarea:focus {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06);
+}
+
+.oriental-textarea::placeholder {
+  color: rgba(0, 0, 0, 0.5);
+  font-style: italic;
+}
+
+.oriental-select {
+  width: 100%;
+  padding: 0.6rem 0.85rem;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(180, 160, 200, 0.25);
+  border-radius: 0.75rem;
+  font-family: "Songti SC", "STKaiti", "KaiTi", serif;
+  font-size: 0.85rem;
+  color: #000000;
+  letter-spacing: 0.04em;
+  outline: none;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23948264' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2rem;
+}
+
+.oriental-select:focus {
+  background-color: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06);
+}
+
+.oriental-upload-area {
+  position: relative;
+  width: 100%;
+  height: 8rem;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.4);
+  border: 1.5px dashed rgba(255, 255, 255, 0.2);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.oriental-upload-area:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.oriental-upload-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.oriental-upload-placeholder span {
+  font-family: "Songti SC", "STKaiti", "KaiTi", serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  margin-top: 0.4rem;
+}
+
+.oriental-upload-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(62, 52, 40, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.oriental-upload-area:hover .oriental-upload-overlay {
+  opacity: 1;
+}
+
+.oriental-toggle-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.oriental-toggle-btn {
+  flex: 1;
+  padding: 0.6rem 1rem;
+  border-radius: 0.75rem;
+  font-family: "Songti SC", "STKaiti", "KaiTi", serif;
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(180, 160, 200, 0.25);
+  color: rgba(0, 0, 0, 0.7);
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.oriental-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.oriental-toggle-btn.is-active {
+  background: #3c3b36;
+  /* Ink color */
+  color: #ebdfc8;
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgba(148, 120, 72, 0.15);
+  font-weight: 700;
+}
+
+.oriental-toggle-btn:active {
+  transform: scale(0.97);
+}
+
+.oriental-error {
+  padding: 0.5rem 0.75rem;
+  background: rgba(200, 120, 110, 0.1);
+  border: 1px solid rgba(200, 120, 110, 0.2);
+  border-radius: 0.625rem;
+  font-family: "Songti SC", "STKaiti", "KaiTi", serif;
+  font-size: 0.8rem;
+  color: rgba(180, 80, 70, 0.8);
+  letter-spacing: 0.04em;
+}
+
+.oriental-hint {
+  font-family: "Songti SC", "STKaiti", "KaiTi", serif;
+  font-size: 0.65rem;
+  color: rgba(0, 0, 0, 0.6);
+  letter-spacing: 0.08em;
+  text-align: center;
+  margin-top: 0.75rem;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   原料管理页（全屏） — 东方韵味 (Ingredient Manager Full Page)
+   ══════════════════════════════════════════════════════════════════ */
+
+.im-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(40px) saturate(1.2);
+  -webkit-backdrop-filter: blur(40px) saturate(1.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.im-page-title {
+  font-family: "Songti SC", "STKaiti", "KaiTi", "SimSun", serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  letter-spacing: 0.12em;
+  margin-left: 0.5rem;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.im-back-btn {
+  padding: 0.5rem;
+  margin-left: -0.5rem;
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.75);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.im-back-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.im-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.im-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding: 0 0.25rem;
+}
+
+.im-storage-title {
+  font-family: "Songti SC", "STKaiti", "KaiTi", serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #000000;
+  letter-spacing: 0.1em;
+}
+
+.im-storage-count {
+  font-family: "Songti SC", "STKaiti", "KaiTi", serif;
+  font-size: 0.7rem;
+  color: rgba(0, 0, 0, 0.6);
+  letter-spacing: 0.06em;
+}
+
+.im-custom-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.45rem 0.85rem;
+  font-family: "Songti SC", "STKaiti", "KaiTi", serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(255, 252, 245, 0.95);
+  background: linear-gradient(135deg, rgba(148, 120, 72, 0.78) 0%, rgba(128, 108, 72, 0.72) 100%);
+  border: none;
+  border-radius: 0.625rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  letter-spacing: 0.08em;
+  box-shadow: 0 2px 8px rgba(148, 120, 72, 0.12);
+}
+
+.im-custom-btn:hover {
+  box-shadow: 0 4px 12px rgba(148, 120, 72, 0.2);
+}
+
+.im-custom-btn:active {
+  transform: scale(0.96);
+}
+
+.im-custom-form {
+  margin-bottom: 1rem;
+  padding: 0.85rem;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 0.875rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.im-custom-form-title {
+  font-family: "Songti SC", "STKaiti", "KaiTi", serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #000000;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.5rem;
+}
+
+.im-custom-form-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.im-form-btn-cancel {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  font-family: "Songti SC", "STKaiti", "KaiTi", serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #000000;
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 0.625rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  letter-spacing: 0.06em;
+}
+
+.im-form-btn-cancel:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.im-form-btn-add {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  font-family: "Songti SC", "STKaiti", "KaiTi", serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: rgba(255, 252, 245, 0.95);
+  background: linear-gradient(135deg, rgba(148, 120, 72, 0.8) 0%, rgba(128, 108, 72, 0.75) 100%);
+  border: none;
+  border-radius: 0.625rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  letter-spacing: 0.06em;
+}
+
+.im-form-btn-add:hover {
+  box-shadow: 0 2px 8px rgba(148, 120, 72, 0.15);
+}
+
+.im-form-btn-add:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.im-category-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.55rem 0.5rem;
+  font-family: "Songti SC", "STKaiti", "KaiTi", serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #000000;
+  letter-spacing: 0.1em;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: transparent;
+  border: none;
+  text-align: left;
+}
+
+.im-category-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #000000;
+}
+
+.im-category-icon {
+  color: rgba(0, 0, 0, 0.6);
+  transition: transform 0.25s ease;
+}
+
+.im-category-icon.is-open {
+  transform: rotate(180deg);
+}
+
+.im-tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0.4rem 0.25rem 0.75rem;
+  animation: tags-fade-in 0.3s ease both;
+}
+
+.im-tag {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.3rem 0.6rem 0.35rem;
+  font-family: "Songti SC", "STKaiti", "KaiTi", serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  border-radius: 42% 58% 51% 49% / 58% 42% 56% 44%;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  border: 1px solid;
+}
+
+.im-tag.is-stocked {
+  color: #000000;
+  background: rgba(148, 120, 72, 0.15);
+  border-color: rgba(148, 120, 72, 0.4);
+  box-shadow: 0 2px 6px rgba(148, 120, 72, 0.1);
+}
+
+.im-tag.is-stocked:hover {
+  background: rgba(148, 120, 72, 0.25);
+  transform: scale(1.03);
+}
+
+.im-tag.is-unstocked {
+  color: rgba(0, 0, 0, 0.65);
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+.im-tag.is-unstocked:hover {
+  color: rgba(0, 0, 0, 0.85);
+  border-color: rgba(0, 0, 0, 0.25);
+}
+
+.im-tag.is-custom {
+  color: #000000;
+  background: rgba(167, 139, 250, 0.15);
+  border-color: rgba(167, 139, 250, 0.4);
+  box-shadow: 0 2px 6px rgba(167, 139, 250, 0.1);
+}
+
+.im-tag.is-custom:hover {
+  background: rgba(167, 139, 250, 0.25);
+}
+
+.im-tag:active {
+  transform: scale(0.96);
+}
+
+.im-tag-check {
+  color: #000000;
+}
+
+.im-custom-section-title {
+  font-family: "Songti SC", "STKaiti", "KaiTi", serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #000000;
+  letter-spacing: 0.08em;
+  padding: 0.5rem 0.25rem;
+}
+
+.detail-glass-container {
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.94), rgba(248, 250, 252, 0.88));
+  backdrop-filter: blur(40px) saturate(1.4);
+  -webkit-backdrop-filter: blur(40px) saturate(1.4);
+  box-shadow:
+    0 -12px 48px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 2.8rem 2.8rem 0 0;
+  min-height: 65vh;
+  position: relative;
+  z-index: 10;
+}
+
+.ink-wash-mask {
+  mask-image: linear-gradient(to bottom, black 75%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 75%, transparent 100%);
+}
+
+.oriental-title-large {
+  font-family: "Songti SC", "STKaiti", "KaiTi", serif;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: #1a1a1a;
+  line-height: 1.25;
+  text-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
+}
+
+.floating-action-bar {
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(28px) saturate(1.5);
+  -webkit-backdrop-filter: blur(28px) saturate(1.5);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  border-radius: 2rem;
+  margin: 0 auto 1.5rem;
+  width: calc(100% - 2rem);
+  max-width: 480px;
+}
+
+.jade-action-btn {
+  background: linear-gradient(180deg, rgba(60, 59, 54, 0.9), rgba(40, 39, 34, 0.95));
+  color: #ebdfc8;
+  border-radius: 1.25rem;
+  font-family: "Songti SC", "STKaiti", "KaiTi", serif;
+  letter-spacing: 0.2em;
+  font-weight: 700;
+  transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+  box-shadow: 0 8px 24px rgba(60, 50, 40, 0.2);
+}
+
+.jade-action-btn:active {
+  transform: scale(0.96);
+  opacity: 0.9;
+}
+
+.soft-ingredient-pill {
+  background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.6));
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+  transition: all 0.4s ease;
+}
+
+.soft-ingredient-pill.is-checked {
+  opacity: 0.45;
+  filter: grayscale(0.8) blur(0.5px);
+  transform: scale(0.98);
+}
+
+.method-step-ink-point {
+  width: 1rem;
+  height: 1rem;
+  background: #3b3a36;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 4px rgba(60, 58, 54, 0.08);
+  border-radius: 50%;
+  position: relative;
+  z-index: 5;
+}
+
+.method-line-vertical {
+  width: 1.5px;
+  background: linear-gradient(to bottom, #3b3a36 0%, rgba(60, 58, 54, 0.1) 100%);
+  opacity: 0.4;
+  position: absolute;
+  top: 1.25rem;
+  bottom: 0;
+  left: calc(0.5rem - 0.75px);
+}
+
+@keyframes jade-glow {
+
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+
+  50% {
+    opacity: 0.9;
+  }
+}
+
+.drink-hero-mask-layer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 120px;
+  background: linear-gradient(to top, white 20%, transparent);
+  pointer-events: none;
+  z-index: 5;
+}
