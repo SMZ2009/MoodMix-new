@@ -1684,6 +1684,54 @@ const App = () => {
   }, [apiLoadDrinkDetail]);
 
   const mainContentRef = useRef(null);
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
+
+  // 处理触摸滑动事件，实现右滑显示侧边栏
+  useEffect(() => {
+    const handleTouchStart = (e) => {
+      // 只在屏幕左侧100px范围内触发
+      if (e.touches[0].clientX <= 100) {
+        touchStartX.current = e.touches[0].clientX;
+        touchStartY.current = e.touches[0].clientY;
+      }
+    };
+
+    const handleTouchMove = (e) => {
+      if (touchStartX.current === 0) return;
+      
+      const touchX = e.touches[0].clientX;
+      const touchY = e.touches[0].clientY;
+      const deltaX = touchX - touchStartX.current;
+      const deltaY = touchY - touchStartY.current;
+      
+      // 确保是水平滑动且滑动距离足够
+      if (Math.abs(deltaX) > Math.abs(deltaY) && deltaX > 50) {
+        setSideDrawerOpen(true);
+        touchStartX.current = 0; // 重置，防止重复触发
+      }
+    };
+
+    const handleTouchEnd = () => {
+      touchStartX.current = 0;
+      touchStartY.current = 0;
+    };
+
+    const mainElement = mainContentRef.current;
+    if (mainElement) {
+      mainElement.addEventListener('touchstart', handleTouchStart, { passive: true });
+      mainElement.addEventListener('touchmove', handleTouchMove, { passive: true });
+      mainElement.addEventListener('touchend', handleTouchEnd, { passive: true });
+    }
+
+    return () => {
+      if (mainElement) {
+        mainElement.removeEventListener('touchstart', handleTouchStart);
+        mainElement.removeEventListener('touchmove', handleTouchMove);
+        mainElement.removeEventListener('touchend', handleTouchEnd);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     console.log('isFocusMode changed to:', isFocusMode);
