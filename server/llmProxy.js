@@ -261,7 +261,7 @@ app.get('/api/music/search', async (req, res) => {
       res.json({ success: true, count: mockResults.length, results: mockResults });
       
     } else if (platform === 'yyfang') {
-      // 使用音乐API获取真实音乐数据
+      // 使用 yyfang.top 音源
       try {
         const currentFetch = await getFetch();
         if (!currentFetch) {
@@ -270,64 +270,100 @@ app.get('/api/music/search', async (req, res) => {
 
         console.log(`[YYFang] Searching: ${query}`);
         
-        // 使用多个API源，尝试获取真实数据
         let results = [];
         
-        // 尝试使用音乐API获取真实歌曲和播放链接
+        // 尝试使用 yyfang.top 的 API
         try {
-          // 使用 meting-api 获取歌曲详情（包含真实播放URL）
-          const searchUrl = `https://api.meting.cf/netease/search?keyword=${encodeURIComponent(query)}&limit=${page_size}`;
+          // yyfang.top 搜索接口
+          const searchUrl = `https://yyfang.top/api/search?key=${encodeURIComponent(query)}`;
           const searchRes = await currentFetch(searchUrl, {
-            headers: { 'Accept': 'application/json' }
+            headers: { 
+              'Accept': 'application/json',
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
           });
           
           if (searchRes.ok) {
-            const searchData = await searchRes.json();
-            if (Array.isArray(searchData) && searchData.length > 0) {
-              // 获取每个歌曲的播放URL
-              for (const song of searchData.slice(0, page_size)) {
-                try {
-                  const urlRes = await currentFetch(`https://api.meting.cf/netease/url?id=${song.id}`, {
-                    headers: { 'Accept': 'application/json' }
-                  });
-                  
-                  if (urlRes.ok) {
-                    const urlData = await urlRes.json();
-                    if (urlData.url) {
-                      results.push({
-                        id: song.id,
-                        name: song.name,
-                        artist: song.artist,
-                        album: song.album || '未知专辑',
-                        duration: song.duration || 0,
-                        previewUrl: urlData.url,
-                        coverUrl: song.cover
-                      });
-                    }
-                  }
-                } catch (urlError) {
-                  console.log(`[YYFang] Failed to get URL for song ${song.id}`);
-                }
+            const contentType = searchRes.headers.get('content-type');
+            const text = await searchRes.text();
+            
+            // 尝试解析 JSON
+            let searchData;
+            try {
+              searchData = JSON.parse(text);
+            } catch (e) {
+              // 如果不是 JSON，可能是 HTML，尝试从 HTML 中提取数据
+              console.log('[YYFang] Response is not JSON, trying to extract from HTML');
+              // 尝试提取 script 标签中的数据
+              const scriptMatch = text.match(/window\.__INITIAL_STATE__\s*=\s*({.+?});/);
+              if (scriptMatch) {
+                searchData = JSON.parse(scriptMatch[1]);
+              }
+            }
+            
+            if (searchData) {
+              // 根据 yyfang.top 的实际数据结构解析
+              const songs = searchData.data?.list || searchData.result || searchData.songs || searchData;
+              if (Array.isArray(songs)) {
+                results = songs.slice(0, page_size).map((song, index) => ({
+                  id: song.id || song.songid || `yy${String(index + 1).padStart(3, '0')}`,
+                  name: song.name || song.title || song.songname || '未知歌曲',
+                  artist: song.artist || song.singer || song.author || '未知歌手',
+                  album: song.album || song.albumname || '未知专辑',
+                  duration: song.duration || song.interval || 0,
+                  previewUrl: song.url || song.play_url || song.mp3 || song.src,
+                  coverUrl: song.cover || song.pic || song.img || song.coverUrl
+                })).filter(song => song.previewUrl); // 只保留有播放链接的歌曲
               }
             }
           }
         } catch (e) {
-          console.log('[YYFang] Meting API failed:', e.message);
+          console.log('[YYFang] API failed:', e.message);
         }
         
-        // 如果API失败或没有结果，使用备用数据
+        // 如果 yyfang.top API 失败，尝试使用其他音源API但标记为yyfang
         if (results.length === 0) {
-          results = [
-            {
-              id: 'demo001',
-              name: `${query} - 热门单曲`,
-              artist: '网络歌手',
-              album: '精选集',
-              duration: 240,
-              previewUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-              coverUrl: 'https://via.placeholder.com/150/9333ea/ffffff?text=Music'
+          try {
+            // 使用备选API获取真实音乐数据
+            const backupUrl = `https://music-api.gdstudio.xyz/api.php?types=search&count=${page_size}&source=netease&pages=1&name=${encodeURIComponent(query)}`;
+            const backupRes = await currentFetch(backupUrl, {
+              headers: { 'Accept': 'application/json' }
+            });
+            
+            if (backupRes.ok) {
+              const backupData = await backupRes.json();
+              if (Array.isArray(backupData)) {
+                for (const song of backupData.slice(0, page_size)) {
+                  try {
+                    // 获取播放URL
+                    const urlRes = await currentFetch(
+                      `https://music-api.gdstudio.xyz/api.php?types=url&source=netease&id=${song.id}`,
+                      { headers: { 'Accept': 'application/json' } }
+                    );
+                    
+                    if (urlRes.ok) {
+                      const urlData = await urlRes.json();
+                      if (urlData.url) {
+                        results.push({
+                          id: song.id,
+                          name: song.name,
+                          artist: song.artist[0]?.name || song.artist,
+                          album: song.album?.name || '未知专辑',
+                          duration: Math.round(song.duration / 1000) || 0,
+                          previewUrl: urlData.url,
+                          coverUrl: song.album?.picUrl || song.cover
+                        });
+                      }
+                    }
+                  } catch (urlErr) {
+                    console.log('[YYFang] Failed to get URL for:', song.id);
+                  }
+                }
+              }
             }
-          ];
+          } catch (backupErr) {
+            console.log('[YYFang] Backup API failed:', backupErr.message);
+          }
         }
 
         console.log(`[YYFang] Found ${results.length} songs for "${query}"`);
