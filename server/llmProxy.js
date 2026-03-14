@@ -266,7 +266,7 @@ app.get('/api/music/search', async (req, res) => {
         console.log(`[YYFang] Searching: ${query}`);
         
         // 由于yyfang.top返回的是HTML页面，暂时使用模拟数据
-        // 实际项目中需要解析HTML或使用其他方式获取数据
+        // 使用公开可用的音频URL进行测试
         const mockResults = [
           {
             id: 'yy001',
@@ -274,8 +274,8 @@ app.get('/api/music/search', async (req, res) => {
             artist: 'YY音源',
             album: '在线音乐',
             duration: 240,
-            previewUrl: `https://yyfang.top/music/${encodeURIComponent(query)}_1.mp3`,
-            coverUrl: 'https://yyfang.top/cover/default.jpg'
+            previewUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+            coverUrl: 'https://via.placeholder.com/150/9333ea/ffffff?text=YY+Music+1'
           },
           {
             id: 'yy002',
@@ -283,8 +283,8 @@ app.get('/api/music/search', async (req, res) => {
             artist: '热门歌手',
             album: '精选集',
             duration: 180,
-            previewUrl: `https://yyfang.top/music/${encodeURIComponent(query)}_2.mp3`,
-            coverUrl: 'https://yyfang.top/cover/default.jpg'
+            previewUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+            coverUrl: 'https://via.placeholder.com/150/9333ea/ffffff?text=YY+Music+2'
           },
           {
             id: 'yy003',
@@ -292,8 +292,8 @@ app.get('/api/music/search', async (req, res) => {
             artist: '推荐艺人',
             album: '热门单曲',
             duration: 200,
-            previewUrl: `https://yyfang.top/music/${encodeURIComponent(query)}_3.mp3`,
-            coverUrl: 'https://yyfang.top/cover/default.jpg'
+            previewUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
+            coverUrl: 'https://via.placeholder.com/150/9333ea/ffffff?text=YY+Music+3'
           }
         ];
         
