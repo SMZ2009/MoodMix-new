@@ -145,7 +145,15 @@ const MoodInputBar = ({
       onChangeRef.current(currentValue + interimText);
       setInterimText('');
     }
-  }, [interimText]);
+    
+    // Auto-submit if there's content after a short delay
+    setTimeout(() => {
+      const currentValue = valueRef.current || '';
+      if (currentValue.trim() || selectedTag) {
+        onSubmit();
+      }
+    }, 300);
+  }, [interimText, selectedTag]);
 
   // Handle press start (mouse/touch)
   const handlePressStart = useCallback((e) => {
