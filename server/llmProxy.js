@@ -261,47 +261,53 @@ app.get('/api/music/search', async (req, res) => {
       res.json({ success: true, count: mockResults.length, results: mockResults });
       
     } else if (platform === 'yyfang') {
-      // yyfang.top 音源 API - 返回HTML页面，需要特殊处理
+      // 使用 Meting API 获取真实音乐数据
       try {
-        console.log(`[YYFang] Searching: ${query}`);
+        const currentFetch = await getFetch();
+        if (!currentFetch) {
+          return res.status(500).json({ error: 'Fetch implementation not found', success: false, results: [] });
+        }
+
+        console.log(`[YYFang/Meting] Searching: ${query}`);
         
-        // 由于yyfang.top返回的是HTML页面，暂时使用模拟数据
-        // 使用公开可用的音频URL进行测试
-        const mockResults = [
-          {
-            id: 'yy001',
-            name: `${query} - 搜索结果1`,
-            artist: 'YY音源',
-            album: '在线音乐',
-            duration: 240,
-            previewUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-            coverUrl: 'https://via.placeholder.com/150/9333ea/ffffff?text=YY+Music+1'
-          },
-          {
-            id: 'yy002',
-            name: `${query} - 搜索结果2`,
-            artist: '热门歌手',
-            album: '精选集',
-            duration: 180,
-            previewUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
-            coverUrl: 'https://via.placeholder.com/150/9333ea/ffffff?text=YY+Music+2'
-          },
-          {
-            id: 'yy003',
-            name: `${query} - 搜索结果3`,
-            artist: '推荐艺人',
-            album: '热门单曲',
-            duration: 200,
-            previewUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
-            coverUrl: 'https://via.placeholder.com/150/9333ea/ffffff?text=YY+Music+3'
+        // 使用 Meting API (网易云音乐源)
+        const searchUrl = `https://api.i-meto.com/meting/api?server=netease&type=search&id=1&_=${Date.now()}&keyword=${encodeURIComponent(query)}`;
+        
+        const response = await currentFetch(searchUrl, {
+          headers: { 
+            'Accept': 'application/json',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
           }
-        ];
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('[Meting] API Error:', response.status, errorText);
+          return res.status(response.status).json({ 
+            error: `Meting API error: ${response.status}`,
+            success: false,
+            results: [] 
+          });
+        }
+
+        const data = await response.json();
         
-        console.log(`[YYFang] Found ${mockResults.length} songs for "${query}"`);
-        res.json({ success: true, count: mockResults.length, results: mockResults });
+        // Meting API 返回格式: [{ title, author, url, pic, lrc }, ...]
+        const results = (data || []).slice(0, page_size).map((song, index) => ({
+          id: song.id || `yy${String(index + 1).padStart(3, '0')}`,
+          name: song.title || song.name || '未知歌曲',
+          artist: song.author || song.artist || '未知歌手',
+          album: song.album || '未知专辑',
+          duration: song.duration || 0,
+          previewUrl: song.url,
+          coverUrl: song.pic
+        }));
+
+        console.log(`[Meting] Found ${results.length} songs for "${query}"`);
+        res.json({ success: true, count: results.length, results });
 
       } catch (error) {
-        console.error('[YYFang Proxy Error]', error.message);
+        console.error('[YYFang/Meting Proxy Error]', error.message);
         res.status(500).json({ error: error.message, success: false, results: [] });
       }
       
